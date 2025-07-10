@@ -24,9 +24,24 @@ jobs:
       - name: Install cibuildwheel
         run: python -m pip install cibuildwheel==3.0.1
 
-      - name: Install libomp
+      - name: Install libomp and set up environment
         if: matrix.os == 'macos-latest' || matrix.os == 'macos-13'
-        run: brew install libomp
+        run: |
+          brew install libomp llvm
+
+          LLVM_PREFIX=$(brew --prefix llvm)
+          LIBOMP_PREFIX=$(brew --prefix libomp)
+
+          # Tell setuptools which compiler to call
+          echo "CC=${LLVM_PREFIX}/bin/clang"    >> $GITHUB_ENV
+          echo "CXX=${LLVM_PREFIX}/bin/clang++" >> $GITHUB_ENV
+
+          # Point -fopenmp at the right headers + libs
+          echo "CPPFLAGS=-I${LIBOMP_PREFIX}/include" >> $GITHUB_ENV
+          echo "LDFLAGS=-L${LIBOMP_PREFIX}/lib"       >> $GITHUB_ENV
+
+          # Prepend Homebrew's LLVM to PATH so any clang/clang++ calls hit the right one
+          echo "PATH=${LLVM_PREFIX}/bin:\$PATH"      >> $GITHUB_ENV
 
       - name: Build wheels
         run: python -m cibuildwheel --output-dir wheelhouse
