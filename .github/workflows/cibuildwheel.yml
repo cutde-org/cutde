@@ -41,7 +41,7 @@ jobs:
           echo "LDFLAGS=-L${LIBOMP_PREFIX}/lib"       >> $GITHUB_ENV
 
           # Prepend Homebrew's LLVM to PATH so any clang/clang++ calls hit the right one
-          echo "PATH=${LLVM_PREFIX}/bin:\$PATH"      >> $GITHUB_ENV
+          echo "PATH=${LLVM_PREFIX}/bin:$PATH"      >> $GITHUB_ENV
 
       - name: Build wheels
         run: python -m cibuildwheel --output-dir wheelhouse
