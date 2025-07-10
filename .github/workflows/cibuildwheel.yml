@@ -43,6 +43,13 @@ jobs:
           # Prepend Homebrew's LLVM to PATH so any clang/clang++ calls hit the right one
           echo "PATH=${LLVM_PREFIX}/bin:$PATH"      >> $GITHUB_ENV
 
+      - name: Figure out macOS deployment target
+        if: runner.os == 'macOS'
+        run: |
+          # e.g. “13.4.1” → “13.4”
+          OS_VER=$(sw_vers -productVersion | cut -d. -f1-2)
+          echo "MACOSX_DEPLOYMENT_TARGET=${OS_VER}" >> $GITHUB_ENV
+
       - name: Build wheels
         run: python -m cibuildwheel --output-dir wheelhouse
         # to supply options, put them in 'env', like:
