@@ -208,7 +208,7 @@ jobs:
       - name: Install script dependencies
         run: |
           ${{ matrix.python-cmd }} -m pip install --upgrade pip
-          ${{ matrix.python-cmd }} -m pip install -r scripts/requirements.txt
+          ${{ matrix.python-cmd }} -m pip install -r cibuildwheel-scripts/requirements.txt
 
       - name: Download all wheel artifacts
         uses: actions/download-artifact@v4
@@ -240,12 +240,12 @@ jobs:
 
       - name: Test all wheels
         run: |
-          ${{ matrix.python-cmd }} scripts/test_wheels.py --wheels-dir ./wheels-flat --results-dir ./wheel-results/${{ matrix.platform }}
+          ${{ matrix.python-cmd }} cibuildwheel-scripts/test_wheels.py --wheels-dir ./wheels-flat --results-dir ./wheel-results/${{ matrix.platform }}
 
       - name: Generate summary for this platform
         if: always()
         run: |
-          ${{ matrix.python-cmd }} scripts/generate_summary.py --results-dir ./wheel-results/${{ matrix.platform }} --github-summary
+          ${{ matrix.python-cmd }} cibuildwheel-scripts/generate_summary.py --results-dir ./wheel-results/${{ matrix.platform }} --github-summary
 
       - name: Upload wheel test results
         if: always()
@@ -274,7 +274,7 @@ jobs:
       - name: Install script dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r scripts/requirements.txt
+          pip install -r cibuildwheel-scripts/requirements.txt
 
       - name: Download all wheel test results
         uses: actions/download-artifact@v4
@@ -285,7 +285,7 @@ jobs:
 
       - name: Generate consolidated summary
         run: |
-          python scripts/generate_summary.py --results-dir ./all-results --github-summary
+          python cibuildwheel-scripts/generate_summary.py --results-dir ./all-results --github-summary
 
       - name: Upload consolidated performance summary
         uses: actions/upload-artifact@v4

@@ -150,13 +150,16 @@ def main():
     if essential_ok:
         print("\n🎉 Ready to test wheels!")
         print("\nExample usage:")
-        print("  python scripts/download_artifacts.py <run-url> --wheels-only")
         print(
-            "  python scripts/test_wheels.py --wheels-dir ./wheels "
+            "  python cibuildwheel-scripts/download_artifacts.py "
+            "<run-url> --wheels-only"
+        )
+        print(
+            "  python cibuildwheel-scripts/test_wheels.py --wheels-dir ./wheels "
             "--results-dir ./results"
         )
         print(
-            "  python scripts/generate_summary.py --results-dir ./results "
+            "  python cibuildwheel-scripts/generate_summary.py --results-dir ./results "
             "--format console"
         )
 

@@ -50,11 +50,16 @@ class SummaryGenerator:
                         results.extend(data)
                     else:
                         results.append(data)
-                logger.debug(f"Loaded {len(data) if isinstance(data, list) else 1} results from {result_file}")
+                logger.debug(
+                    f"Loaded {len(data) if isinstance(data, list) else 1} "
+                    f"results from {result_file}"
+                )
             except Exception as e:
                 logger.warning(f"Failed to load results from {result_file}: {e}")
 
-        logger.info(f"Loaded {len(results)} test results from {len(result_files)} files")
+        logger.info(
+            f"Loaded {len(results)} test results from {len(result_files)} files"
+        )
         return results
 
     def get_statistics(self) -> Dict:
@@ -332,8 +337,12 @@ class SummaryGenerator:
         # Determine if this is a combined summary (multiple platforms) or individual
         unique_platforms = set(r.get("platform", "unknown") for r in self.results)
         is_combined = len(unique_platforms) > 1
-        
-        title = "Combined Performance Summary" if is_combined else "TDE Individual Wheel Performance Test Results"
+
+        title = (
+            "Combined Performance Summary"
+            if is_combined
+            else "TDE Individual Wheel Performance Test Results"
+        )
 
         lines = [
             f"# 🚀 {title}",
@@ -379,7 +388,8 @@ class SummaryGenerator:
             [
                 "",
                 "## Performance Notes",
-                "- All tests use a 1000x1000 grid (1,000,000 observation points) with 2 triangular dislocation elements",
+                "- All tests use a 1000x1000 grid (1,000,000 observation points) "
+                "with 2 triangular dislocation elements",
                 "- Timing includes displacement matrix computation only",
                 "- Each wheel tested in isolated virtual environment",
                 "",

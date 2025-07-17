@@ -1,5 +1,13 @@
 # TDE Wheel Testing Scripts
 
+## ⚠️ **DISCLAIMER: VIBE-CODED SOFTWARE** ⚠️
+
+**WARNING**: Everything in this directory was shamelessly vibe-coded! **Don't overthink it!**
+
+We just need to ensure that the wheels are not broken, so we can afford to be somewhat careless.
+
+---
+
 This directory contains Python scripts for comprehensive testing of cutde wheels across platforms and Python versions, using modern tools for better reliability and ease of use.
 
 ## 🚀 Key Features
@@ -129,27 +137,27 @@ python generate_summary.py --results-dir ./results --github-summary
 
 2. **Download wheels from a GitHub Actions run:**
    ```bash
-   python scripts/download_artifacts.py https://github.com/user/repo/actions/runs/123456789 --wheels-only -o ./local-test
+   python cibuildwheel-scripts/download_artifacts.py https://github.com/user/repo/actions/runs/123456789 --wheels-only -o ./local-test
    ```
 
 3. **Test all wheels:**
    ```bash
-   python scripts/test_wheels.py --wheels-dir ./local-test/wheels --results-dir ./local-test/results
+   python cibuildwheel-scripts/test_wheels.py --wheels-dir ./local-test/wheels --results-dir ./local-test/results
    ```
 
 4. **Generate summary:**
    ```bash
-   python scripts/generate_summary.py --results-dir ./local-test/results --format console
+   python cibuildwheel-scripts/generate_summary.py --results-dir ./local-test/results --format console
    ```
 
 ## Installation
 
 ```bash
 # Install script dependencies
-pip install -r scripts/requirements.txt
+pip install -r cibuildwheel-scripts/requirements.txt
 
 # Make scripts executable (Unix-like systems)
-chmod +x scripts/*.py
+chmod +x cibuildwheel-scripts/*.py
 ```
 
 ## Environment Management Comparison
@@ -212,15 +220,15 @@ The scripts work seamlessly in GitHub Actions:
 - name: Install script dependencies
   run: |
     python -m pip install --upgrade pip
-    pip install -r scripts/requirements.txt
+    pip install -r cibuildwheel-scripts/requirements.txt
 
 - name: Test all wheels
   run: |
-    python scripts/test_wheels.py --wheels-dir ./wheels-flat --results-dir ./wheel-results
+    python cibuildwheel-scripts/test_wheels.py --wheels-dir ./wheels-flat --results-dir ./wheel-results
 
 - name: Generate summary
   run: |
-    python scripts/generate_summary.py --results-dir ./wheel-results --github-summary
+    python cibuildwheel-scripts/generate_summary.py --results-dir ./wheel-results --github-summary
 ```
 
 **Benefits in CI:**
@@ -241,7 +249,7 @@ gh auth status
 gh auth login
 
 # Test with a public repo first
-python scripts/download_artifacts.py https://github.com/public/repo/actions/runs/123 --list
+python cibuildwheel-scripts/download_artifacts.py https://github.com/public/repo/actions/runs/123 --list
 ```
 
 ### Wheel Testing Issues
@@ -273,14 +281,14 @@ micromamba --version
 micromamba shell init
 
 # Force micromamba usage
-python scripts/test_wheels.py --wheels-dir ./wheels --results-dir ./results --force-micromamba
+python cibuildwheel-scripts/test_wheels.py --wheels-dir ./wheels --results-dir ./results --force-micromamba
 ```
 
 ### Permission Issues
 ```bash
 # Make scripts executable
-chmod +x scripts/*.py
+chmod +x cibuildwheel-scripts/*.py
 
 # Or run with python explicitly
-python scripts/test_wheels.py --help
-``` 
+python cibuildwheel-scripts/test_wheels.py --help
+```
