@@ -31,7 +31,8 @@ jobs:
         uses: hynek/build-and-inspect-python-package@v2
         with:
           # Generate build provenance attestations to establish SLSA Build Level 2+
-          attest-build-provenance-github: true
+          # Only enable attestations for trusted workflows (not fork PRs)
+          attest-build-provenance-github: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
           # Skip building wheels since we build them separately via cibuildwheel
           skip-wheel: 'true'
 
@@ -88,6 +89,8 @@ jobs:
         uses: pypa/cibuildwheel@v3.0.1
 
       - name: Generate build provenance attestations for wheels
+        # Only generate attestations for trusted workflows (not fork PRs)
+        if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
         uses: actions/attest-build-provenance@v1
         with:
           # Generate SLSA Build Level 2+ provenance for all built wheels
