@@ -407,7 +407,7 @@ class SummaryGenerator:
         else:  # markdown
             content = self.generate_github_actions_summary()
 
-        with open(output_file, "w") as f:
+        with open(output_file, "w", encoding="utf-8") as f:
             f.write(content)
 
         logger.info(f"Summary saved to {output_file}")
@@ -452,7 +452,7 @@ def main():
         github_summary_file = os.getenv("GITHUB_STEP_SUMMARY")
         if github_summary_file:
             summary = generator.generate_github_actions_summary()
-            with open(github_summary_file, "a") as f:
+            with open(github_summary_file, "a", encoding="utf-8") as f:
                 f.write(summary)
             logger.info("Summary written to GitHub Actions summary")
         else:
