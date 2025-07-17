@@ -83,10 +83,7 @@ class GHArtifactDownloader:
                 f"{run_info['run_id']}/artifacts"
             )
             result = subprocess.run(
-                ["gh", "api", api_url],
-                capture_output=True,
-                text=True,
-                check=True
+                ["gh", "api", api_url], capture_output=True, text=True, check=True
             )
 
             data = json.loads(result.stdout)
@@ -215,9 +212,7 @@ class GHArtifactDownloader:
         output_dir = Path(output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
 
-        logger.info(
-            f"Downloading all artifacts from run {run_info['run_id']}"
-        )
+        logger.info(f"Downloading all artifacts from run {run_info['run_id']}")
 
         try:
             subprocess.run(

@@ -31,7 +31,7 @@ import shutil
 import subprocess
 import sys
 from pathlib import Path
-from typing import List, Tuple, Dict, Optional
+from typing import Dict, List, Optional, Tuple
 
 # Configure logging
 logging.basicConfig(
@@ -94,10 +94,7 @@ class WheelTester:
         """Check if micromamba is available."""
         try:
             result = self._run_subprocess(
-                ["micromamba", "--version"],
-                capture_output=True,
-                text=True,
-                check=True
+                ["micromamba", "--version"], capture_output=True, text=True, check=True
             )
             version = result.stdout.strip()
             logger.info(f"micromamba {version} is available")
@@ -239,6 +236,7 @@ class WheelTester:
                 ],
                 check=True,
                 capture_output=True,
+                text=True,
             )
 
             logger.info(f"Created environment: {env_name}")
@@ -250,6 +248,9 @@ class WheelTester:
                 f"Failed to create environment with Python {python_version}, "
                 f"trying latest {python_version.split('.')[0]}.x"
             )
+            if hasattr(e, "stderr") and e.stderr:
+                logger.warning(f"Initial error: {e.stderr}")
+
             try:
                 major_version = python_version.split(".")[0]
                 self._run_subprocess(
@@ -271,6 +272,7 @@ class WheelTester:
                     ],
                     check=True,
                     capture_output=True,
+                    text=True,
                 )
 
                 logger.info(
@@ -278,8 +280,13 @@ class WheelTester:
                 )
                 return env_name
 
-            except subprocess.CalledProcessError:
-                logger.error(f"Failed to create micromamba environment: {e}")
+            except subprocess.CalledProcessError as e2:
+                logger.error("Failed to create micromamba environment")
+                logger.error(f"Return code: {e2.returncode}")
+                if hasattr(e2, "stdout") and e2.stdout:
+                    logger.error(f"stdout: {e2.stdout}")
+                if hasattr(e2, "stderr") and e2.stderr:
+                    logger.error(f"stderr: {e2.stderr}")
                 raise
 
     def _create_venv(self, wheel_path: Path, python_version: str) -> Path:
@@ -993,7 +1000,8 @@ class WheelTester:
             logger.info(
                 "Keeping environment '%s' for debugging. Remove manually with: "
                 "micromamba env remove -n %s --yes",
-                env_name, env_name
+                env_name,
+                env_name,
             )
 
             return {
@@ -1030,32 +1038,52 @@ class WheelTester:
             # Install dependencies
             logger.info("Installing dependencies...")
             logger.info("  Upgrading pip...")
-            self._run_subprocess(
-                self._make_python_cmd(
-                    python_exe, ["-m", "pip", "install", "--upgrade", "pip"]
-                ),
-                check=True,
-                capture_output=True,
-            )
+            try:
+                result = self._run_subprocess(
+                    self._make_python_cmd(
+                        python_exe, ["-m", "pip", "install", "--upgrade", "pip"]
+                    ),
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                )
+            except subprocess.CalledProcessError as e:
+                logger.error("  ❌ Pip upgrade failed!")
+                logger.error(f"  Return code: {e.returncode}")
+                if hasattr(e, "stdout") and e.stdout:
+                    logger.error(f"  stdout: {e.stdout}")
+                if hasattr(e, "stderr") and e.stderr:
+                    logger.error(f"  stderr: {e.stderr}")
+                raise
 
             logger.info("  Installing test dependencies...")
-            self._run_subprocess(
-                self._make_python_cmd(
-                    python_exe,
-                    [
-                        "-m",
-                        "pip",
-                        "install",
-                        "pytest",
-                        "numpy",
-                        "scipy",
-                        "matplotlib",
-                        "pyproj",
-                    ],
-                ),
-                check=True,
-                capture_output=True,
-            )
+            try:
+                result = self._run_subprocess(
+                    self._make_python_cmd(
+                        python_exe,
+                        [
+                            "-m",
+                            "pip",
+                            "install",
+                            "pytest",
+                            "numpy",
+                            "scipy",
+                            "matplotlib",
+                            "pyproj",
+                        ],
+                    ),
+                    check=True,
+                    capture_output=True,
+                    text=True,
+                )
+            except subprocess.CalledProcessError as e:
+                logger.error("  ❌ Test dependency installation failed!")
+                logger.error(f"  Return code: {e.returncode}")
+                if hasattr(e, "stdout") and e.stdout:
+                    logger.error(f"  stdout: {e.stdout}")
+                if hasattr(e, "stderr") and e.stderr:
+                    logger.error(f"  stderr: {e.stderr}")
+                raise
 
             # Install the wheel
             logger.info(f"Installing wheel: {wheel_path.name}")

@@ -4,11 +4,11 @@ Performance test script for cutde wheel testing.
 This script is executed in isolated environments to test wheel performance.
 """
 
-import sys
+import argparse
 import platform
+import sys
 import time
 import traceback
-import argparse
 from pathlib import Path
 
 

@@ -4,13 +4,13 @@ Test suite script for cutde wheel testing.
 This script runs the full pytest suite in an isolated environment.
 """
 
-import sys
+import argparse
 import os
-import subprocess
 import shutil
+import subprocess
+import sys
 import tempfile
 import traceback
-import argparse
 from pathlib import Path
 
 

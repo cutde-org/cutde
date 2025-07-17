@@ -9,9 +9,9 @@ import json
 import logging
 import os
 import sys
+from collections import defaultdict
 from pathlib import Path
 from typing import Dict, List
-from collections import defaultdict
 
 # Configure logging
 logging.basicConfig(
@@ -53,13 +53,13 @@ class SummaryGenerator:
         failed_wheels = total_wheels - successful_wheels
 
         # Group by platform
-        platform_stats = defaultdict(int)
+        platform_stats: Dict[str, int] = defaultdict(int)
         for result in self.results:
             platform = result.get("platform", "unknown")
             platform_stats[platform] += 1
 
         # Group by Python version
-        python_stats = defaultdict(int)
+        python_stats: Dict[str, int] = defaultdict(int)
         for result in self.results:
             python_version = result.get("target_python", "unknown")
             python_stats[python_version] += 1
@@ -79,9 +79,9 @@ class SummaryGenerator:
             "total_wheels": total_wheels,
             "successful_wheels": successful_wheels,
             "failed_wheels": failed_wheels,
-            "success_rate": (successful_wheels / total_wheels * 100)
-            if total_wheels > 0
-            else 0,
+            "success_rate": (
+                (successful_wheels / total_wheels * 100) if total_wheels > 0 else 0
+            ),
             "platform_stats": dict(platform_stats),
             "python_stats": dict(python_stats),
             "avg_execution_time": avg_time,
@@ -193,7 +193,16 @@ class SummaryGenerator:
 
     def generate_performance_plots_list(self) -> str:
         """Generate a list of available performance plots."""
-        lines = ["### Available Performance Plots:\n"]
+        lines = [
+            "### Available Performance Plots:",
+            "",
+            "📊 Each plot shows the displacement field computed for a 1000x1000 "
+            "grid with 2 triangular dislocation elements.",
+            "",
+            "🔽 **Download the plots from the workflow artifacts** to view the "
+            "performance visualizations.",
+            "",
+        ]
 
         # Find all PNG files in the results directory
         png_files = list(self.results_dir.rglob("*.png"))
@@ -202,18 +211,70 @@ class SummaryGenerator:
             lines.append("No performance plots found.")
             return "\n".join(lines)
 
+        # Group by platform for better organization
+        platform_groups = {}
         for png_file in sorted(png_files):
             filename = png_file.name
-            # Try to extract some meaningful info from the filename
-            # Format: tde_test_cutde_VERSION_cpXXX_cpXXX_PLATFORM.png
+
+            # Extract platform and Python version info
             parts = filename.replace("tde_test_", "").replace(".png", "").split("_")
+
+            python_version = "unknown"
+            platform_info = "unknown"
+
+            for part in parts:
+                if part.startswith("cp") and len(part) >= 4:
+                    try:
+                        py_ver = part[2:]
+                        if py_ver.isdigit() and len(py_ver) >= 2:
+                            python_version = f"{py_ver[0]}.{py_ver[1:]}"
+                    except (IndexError, ValueError):
+                        pass
+
             if len(parts) >= 3:
-                platform_part = "_".join(
-                    parts[-2:]
-                )  # Last two parts usually contain platform info
-                lines.append(f"- **{filename}** - {platform_part}")
-            else:
-                lines.append(f"- **{filename}**")
+                # Extract platform from filename parts
+                platform_parts = []
+                for part in parts:
+                    if any(
+                        plat in part
+                        for plat in ["linux", "win", "macos", "manylinux", "musllinux"]
+                    ):
+                        platform_parts.append(part)
+                        break
+
+                if platform_parts:
+                    platform_info = platform_parts[0]
+                else:
+                    platform_info = "_".join(parts[-2:])
+
+            if platform_info not in platform_groups:
+                platform_groups[platform_info] = []
+
+            platform_groups[platform_info].append((filename, python_version))
+
+        # Display organized by platform
+        for platform, files in sorted(platform_groups.items()):
+            lines.append(f"#### 🖥️ {platform.replace('_', ' ').title()}")
+            lines.append("")
+
+            for filename, python_version in sorted(files):
+                lines.append(f"- **{filename}** (Python {python_version})")
+
+            lines.append("")
+
+        lines.extend(
+            [
+                "---",
+                "",
+                "💡 **How to view the plots:**",
+                "1. Go to the **Actions** tab of this repository",
+                "2. Click on this workflow run",
+                "3. Scroll down to **Artifacts**",
+                "4. Download the artifact containing the test results",
+                "5. Extract and open the `.png` files to view the performance "
+                "visualizations",
+            ]
+        )
 
         return "\n".join(lines)
 
@@ -310,7 +371,7 @@ class SummaryGenerator:
             [
                 "",
                 "## Performance Notes",
-                "- All tests use a 100x100 grid (10,000 observation points)",
+                "- All tests use a 1000x1000 grid (1,000,000 observation points)",
                 "- 2 triangular dislocation elements",
                 "- Timing includes displacement matrix computation only",
                 "- Each wheel tested in isolated virtual environment",
