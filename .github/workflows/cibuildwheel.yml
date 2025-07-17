@@ -1,11 +1,34 @@
-# Standard cibuildwheel workflow, copied directly from
-# <https://cibuildwheel.pypa.io/en/v3.0.1/ci-services/>
+name: Build and Release Pipeline
 
-name: Build
-
-on: [push, pull_request]
+on: 
+  push:
+    branches:
+      - master
+  pull_request:
+  release:
+    types:
+      - published
 
 jobs:
+  build_sdist:
+    name: Build source distribution
+    runs-on: ubuntu-latest
+    permissions:
+      # write attestations and id-token are necessary for attest-build-provenance-github
+      attestations: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: hynek/build-and-inspect-python-package@v2
+        with:
+          # Prove that the packages were built in the context of this workflow.
+          attest-build-provenance-github: true
+          # Skip building wheels since we build them via cibuildwheel
+          skip-wheel: 'true'
+
   build_wheels:
     name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
@@ -245,3 +268,32 @@ jobs:
         with:
           name: performance-summary
           path: ./all-results/
+
+  publish-package:
+    # Don't publish from forks
+    if: github.repository_owner == 'cutde-org' && github.event_name == 'release' && github.event.action == 'published'
+    # Use the `release` GitHub environment to protect the Trusted Publishing (OIDC)
+    # workflow by requiring signoff from a maintainer.
+    environment: release
+    needs: [build_sdist, build_wheels]
+    runs-on: ubuntu-latest
+    permissions:
+      # write id-token is necessary for trusted publishing (OIDC)
+      id-token: write
+    steps:
+      - name: Download Source Distribution Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          # The build-and-inspect-python-package action invokes upload-artifact.
+          # These are the correct arguments from that action.
+          name: Packages
+          path: dist
+      - name: Download Wheel Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: cibw-wheels-*
+          path: dist
+          merge-multiple: true
+      - name: Publish Package to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        # Implicitly attests that the packages were uploaded in the context of this workflow.
