@@ -90,9 +90,6 @@ class SummaryGenerator:
             "total_wheels": total_wheels,
             "successful_wheels": successful_wheels,
             "failed_wheels": failed_wheels,
-            "success_rate": (
-                (successful_wheels / total_wheels * 100) if total_wheels > 0 else 0
-            ),
             "platform_stats": dict(platform_stats),
             "python_stats": dict(python_stats),
             "avg_execution_time": avg_time,
@@ -277,13 +274,9 @@ class SummaryGenerator:
             [
                 "---",
                 "",
-                "💡 **How to view the plots:**",
-                "1. Go to the **Actions** tab of this repository",
-                "2. Click on this workflow run",
-                "3. Scroll down to **Artifacts**",
-                "4. Download the artifact containing the test results",
-                "5. Extract and open the `.png` files to view the performance "
-                "visualizations",
+                "💡 **Viewing the plots:**",
+                "The plots can be found in the build artifact wheel-test-results-*.",
+                "",
             ]
         )
 
@@ -300,7 +293,6 @@ class SummaryGenerator:
             f"Total wheels tested: {stats['total_wheels']}",
             f"Successful: {stats['successful_wheels']}",
             f"Failed: {stats['failed_wheels']}",
-            f"Success rate: {stats['success_rate']:.1f}%",
             "",
             "Platform breakdown:",
         ]
@@ -337,8 +329,14 @@ class SummaryGenerator:
         """Generate a GitHub Actions summary."""
         stats = self.get_statistics()
 
+        # Determine if this is a combined summary (multiple platforms) or individual
+        unique_platforms = set(r.get("platform", "unknown") for r in self.results)
+        is_combined = len(unique_platforms) > 1
+        
+        title = "Combined Performance Summary" if is_combined else "TDE Individual Wheel Performance Test Results"
+
         lines = [
-            "# 🚀 TDE Individual Wheel Performance Test Results",
+            f"# 🚀 {title}",
             "",
             "Comprehensive performance comparison across all platforms and "
             "Python versions:",
@@ -349,7 +347,6 @@ class SummaryGenerator:
             f"- **Total wheels tested:** {stats['total_wheels']}",
             f"- **Successful wheels:** {stats['successful_wheels']}",
             f"- **Failed wheels:** {stats['failed_wheels']}",
-            f"- **Success rate:** {stats['success_rate']:.1f}%",
             "",
             "### Platform Breakdown:",
         ]
@@ -382,14 +379,9 @@ class SummaryGenerator:
             [
                 "",
                 "## Performance Notes",
-                "- All tests use a 1000x1000 grid (1,000,000 observation points)",
-                "- 2 triangular dislocation elements",
+                "- All tests use a 1000x1000 grid (1,000,000 observation points) with 2 triangular dislocation elements",
                 "- Timing includes displacement matrix computation only",
                 "- Each wheel tested in isolated virtual environment",
-                "- Tests include both manylinux and musllinux variants "
-                "where applicable",
-                "- Results demonstrate cross-platform and cross-Python-version "
-                "compatibility",
                 "",
                 "## Generated Visualizations",
                 "Performance visualization plots have been generated for each "
