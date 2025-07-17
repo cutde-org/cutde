@@ -10,6 +10,7 @@ jobs:
     name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         # macos-13 is an intel runner, macos-14 is apple silicon
         # Note: Windows ARM64 (windows-11-arm) isn't actually supported by cibuildwheel's
@@ -64,33 +65,70 @@ jobs:
     runs-on: ${{ matrix.os }}
     needs: build_wheels
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: ubuntu-latest
             platform: ubuntu-latest
             python-cmd: python
             setup-python: true
+            python-filter: ""
           - os: ubuntu-24.04-arm
             platform: ubuntu-24.04-arm
             python-cmd: python
             setup-python: true
+            python-filter: ""
           - os: windows-latest
             platform: windows-latest
             python-cmd: python
             setup-python: true
+            python-filter: ""
           - os: macos-13
             platform: macos-13
             python-cmd: python
             setup-python: true
+            python-filter: ""
           - os: macos-14
             platform: macos-14
             python-cmd: python
             setup-python: true
+            python-filter: ""
+          - os: ubuntu-latest
+            platform: alpine-musllinux
+            container: python:3.8-alpine
+            python-cmd: python
+            setup-python: false
+            python-filter: "-cp38-"
+          - os: ubuntu-latest
+            platform: alpine-musllinux
+            container: python:3.9-alpine
+            python-cmd: python
+            setup-python: false
+            python-filter: "-cp39-"
+          - os: ubuntu-latest
+            platform: alpine-musllinux
+            container: python:3.10-alpine
+            python-cmd: python
+            setup-python: false
+            python-filter: "-cp310-"
           - os: ubuntu-latest
             platform: alpine-musllinux
             container: python:3.11-alpine
             python-cmd: python
             setup-python: false
+            python-filter: "-cp311-"
+          - os: ubuntu-latest
+            platform: alpine-musllinux
+            container: python:3.12-alpine
+            python-cmd: python
+            setup-python: false
+            python-filter: "-cp312-"
+          - os: ubuntu-latest
+            platform: alpine-musllinux
+            container: python:3.13-alpine
+            python-cmd: python
+            setup-python: false
+            python-filter: "-cp313-"
 
     container: ${{ matrix.container }}
 
@@ -136,6 +174,16 @@ jobs:
           # Create a flat directory with all wheels
           mkdir -p ./wheels-flat
           find ./all-wheels -name "*.whl" -exec cp {} ./wheels-flat/ \;
+          
+          # Filter wheels for Alpine (only Python 3.11)
+          if [ "${{ matrix.python-filter }}" != "" ]; then
+            echo "Filtering wheels for ${{ matrix.platform }} (keeping only ${{ matrix.python-filter }} wheels)..."
+            mkdir -p ./wheels-filtered
+            find ./wheels-flat -name "*${{ matrix.python-filter }}*.whl" -exec cp {} ./wheels-filtered/ \;
+            rm -rf ./wheels-flat
+            mv ./wheels-filtered ./wheels-flat
+          fi
+          
           echo "Wheels organized:"
           ls -la ./wheels-flat/
 
