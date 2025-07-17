@@ -14,24 +14,36 @@ jobs:
     name: Build source distribution
     runs-on: ubuntu-latest
     permissions:
-      # write attestations and id-token are necessary for attest-build-provenance-github
+      # These are required for build provenance attestations
       attestations: write
       id-token: write
+      # This is required to checkout the repository
+      contents: read
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout source code
+        uses: actions/checkout@v4
         with:
+          # Full history is required for setuptools-scm to determine version
           fetch-depth: 0
           persist-credentials: false
-      - uses: hynek/build-and-inspect-python-package@v2
+
+      - name: Build source distribution with attestations
+        uses: hynek/build-and-inspect-python-package@v2
         with:
-          # Prove that the packages were built in the context of this workflow.
+          # Generate build provenance attestations to establish SLSA Build Level 2+
           attest-build-provenance-github: true
-          # Skip building wheels since we build them via cibuildwheel
+          # Skip building wheels since we build them separately via cibuildwheel
           skip-wheel: 'true'
 
   build_wheels:
     name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    permissions:
+      # These are required for build provenance
+      attestations: write
+      id-token: write
+      # This is required to checkout the repository
+      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -43,7 +55,8 @@ jobs:
         os: [ubuntu-latest, ubuntu-24.04-arm, windows-latest, macos-13, macos-14]
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout source code
+        uses: actions/checkout@v4
 
       - name: Install libomp and set up environment
         if: runner.os == 'macOS'
@@ -71,14 +84,17 @@ jobs:
           OS_VER=$(sw_vers -productVersion | cut -d. -f1-2)
           echo "MACOSX_DEPLOYMENT_TARGET=${OS_VER}" >> $GITHUB_ENV
 
-      - name: Build wheels on normal platforms
+      - name: Build wheels with cibuildwheel
         uses: pypa/cibuildwheel@v3.0.1
-        # with:
-        #   package-dir: .
-        #   output-dir: wheelhouse
-        #   config-file: "{package}/pyproject.toml"
 
-      - uses: actions/upload-artifact@v4
+      - name: Generate build provenance attestations for wheels
+        uses: actions/attest-build-provenance@v1
+        with:
+          # Generate SLSA Build Level 2+ provenance for all built wheels
+          subject-path: 'wheelhouse/*.whl'
+
+      - name: Upload wheel artifacts
+        uses: actions/upload-artifact@v4
         with:
           name: cibw-wheels-${{ matrix.os }}-${{ strategy.job-index }}
           path: ./wheelhouse/*.whl
@@ -87,6 +103,9 @@ jobs:
     name: Test wheels on ${{ matrix.platform }}
     runs-on: ${{ matrix.os }}
     needs: build_wheels
+    permissions:
+      # This is required to checkout the repository
+      contents: read
     strategy:
       fail-fast: false
       matrix:
@@ -171,7 +190,8 @@ jobs:
             openssl-dev \
             curl
 
-      - uses: actions/checkout@v4
+      - name: Checkout source code
+        uses: actions/checkout@v4
 
       - name: Set up Python (non-Alpine)
         if: matrix.setup-python
@@ -239,8 +259,12 @@ jobs:
     runs-on: ubuntu-latest
     needs: [test_wheels]
     if: always()
+    permissions:
+      # This is required to checkout the repository
+      contents: read
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout source code
+        uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
