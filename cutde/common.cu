@@ -1,4 +1,7 @@
-<%namespace module="cutde.mako_helpers" import="*"/>
+<%!
+def comp(d):
+    return ["x", "y", "z", "a", "b", "c"][d]
+%>
 
 <%def name="binop(dim, name, op, b_scalar = False)">
 <%

@@ -326,7 +326,6 @@ A summary of the modules.
 * `aca.cu` - the CUDA kernels for the adaptive cross approximation implementation.
 * `backend.py` - a layer that abstracts between the CUDA, OpenCL and C++.
 * `gpu_backend.py` - some helper functions for the CUDA and OpenCL backends
-* `mako_helpers.py` - helper functions for the Mako templating.
 * `cuda.py` - the PyCUDA backend.
 * `opencl.py` - the PyOpenCL backend.
 * `cpp.py` and `cutde.cpp_backend` - combined, these two files provide a portability layer so that the CUDA code can actually be compiled as C++ and run, albeit a bit slowly, on the CPU.
