@@ -73,6 +73,15 @@ class WheelTester:
         cmd_str = ' '.join(shlex.quote(str(arg)) for arg in cmd)
         logger.info(f"Running: {cmd_str}")
         return subprocess.run(cmd, **kwargs)
+    
+    def _make_python_cmd(self, python_executable: str, args: List[str]) -> List[str]:
+        """Create a subprocess command from a python executable and arguments.
+        
+        Handles cases where python_executable might be "py -3.11" (splits into separate args).
+        """
+        # Handle cases where python_executable might be "py -3.11" (split into separate args)
+        python_args = python_executable.split() if ' ' in python_executable else [python_executable]
+        return python_args + args
         
     def _check_micromamba(self):
         """Check if micromamba is available."""
@@ -236,7 +245,7 @@ class WheelTester:
         # Verify the executable version before creating venv
         actual_version = None
         try:
-            result = self._run_subprocess([python_cmd, "--version"], 
+            result = self._run_subprocess(self._make_python_cmd(python_cmd, ["--version"]), 
                                         capture_output=True, text=True, check=True)
             actual_version = result.stdout.strip()
             logger.info(f"  Verified executable version: {actual_version}")
@@ -244,7 +253,7 @@ class WheelTester:
             logger.warning(f"  Could not verify executable version: {e}")
         
         # Create the venv with --copies to avoid symlink issues
-        venv_cmd = [python_cmd, "-m", "venv", "--copies", str(venv_dir)]
+        venv_cmd = self._make_python_cmd(python_cmd, ["-m", "venv", "--copies", str(venv_dir)])
         logger.info(f"  Command: {' '.join(venv_cmd)}")
         logger.info(f"  Using --copies flag to avoid symlink issues")
         
@@ -254,7 +263,7 @@ class WheelTester:
         # Verify that the venv actually contains the correct Python version
         venv_python = self._get_venv_python(venv_dir)
         try:
-            result = self._run_subprocess([venv_python, "--version"], 
+            result = self._run_subprocess(self._make_python_cmd(venv_python, ["--version"]), 
                                         capture_output=True, text=True, check=True)
             venv_version = result.stdout.strip()
             logger.info(f"  Verified venv Python version: {venv_version}")
@@ -291,7 +300,11 @@ class WheelTester:
             delattr(self, '_compatible_python_version')
             return executable
         
-        # Try specific version first
+        # Windows-specific handling
+        if sys.platform == "win32":
+            return self._find_python_executable_windows(target_version)
+        
+        # Unix-like systems (Linux, macOS)
         candidates = [
             f"python{target_version}",
             f"python{target_version.split('.')[0]}",
@@ -342,11 +355,112 @@ class WheelTester:
         logger.error(f"No suitable Python executable found for version {target_version}")
         raise RuntimeError("No suitable Python executable found")
     
+    def _find_python_executable_windows(self, target_version: str) -> str:
+        """Find Python executable on Windows using py launcher or hostedtoolcache."""
+        logger.info(f"Finding Python executable on Windows for version {target_version}")
+        
+        # Try py launcher first (most reliable on Windows)
+        try:
+            py_version_arg = f"-{target_version}"
+            logger.debug(f"Testing py launcher: py {py_version_arg}")
+            result = self._run_subprocess(["py", py_version_arg, "--version"], 
+                                        capture_output=True, text=True)
+            if result.returncode == 0:
+                version = result.stdout.strip()
+                logger.info(f"Found Python via py launcher: py {py_version_arg} -> {version}")
+                
+                # Verify version matches
+                if "Python" in version:
+                    actual_version = version.split()[1]
+                    actual_major_minor = ".".join(actual_version.split(".")[:2])
+                    target_major_minor = ".".join(target_version.split(".")[:2])
+                    
+                    if actual_major_minor == target_major_minor:
+                        logger.info(f"✅ Selected compatible executable: py {py_version_arg} (exact match)")
+                        return f"py {py_version_arg}"
+                    else:
+                        logger.debug(f"❌ Version mismatch: py {py_version_arg} has {actual_major_minor}, need {target_major_minor}")
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            logger.debug(f"py launcher not available or failed for {target_version}")
+        
+        # Try to find Python in hostedtoolcache (GitHub Actions)
+        hostedtoolcache_paths = [
+            Path(f"C:/hostedtoolcache/windows/Python/{target_version}.*/x64/python.exe"),
+            Path(f"C:/hostedtoolcache/windows/Python/{target_version}/x64/python.exe"),
+        ]
+        
+        for path_pattern in hostedtoolcache_paths:
+            try:
+                # Use glob to find matching paths
+                import glob
+                matches = glob.glob(str(path_pattern))
+                if matches:
+                    # Sort to get the latest version
+                    matches.sort(reverse=True)
+                    python_exe = matches[0]
+                    logger.debug(f"Testing hostedtoolcache path: {python_exe}")
+                    
+                    # Test the executable
+                    result = self._run_subprocess([python_exe, "--version"], 
+                                                capture_output=True, text=True)
+                    if result.returncode == 0:
+                        version = result.stdout.strip()
+                        logger.info(f"Found Python in hostedtoolcache: {python_exe} -> {version}")
+                        
+                        # Verify version matches
+                        if "Python" in version:
+                            actual_version = version.split()[1]
+                            actual_major_minor = ".".join(actual_version.split(".")[:2])
+                            target_major_minor = ".".join(target_version.split(".")[:2])
+                            
+                            if actual_major_minor == target_major_minor:
+                                logger.info(f"✅ Selected compatible executable: {python_exe} (exact match)")
+                                return python_exe
+                            else:
+                                logger.debug(f"❌ Version mismatch: {python_exe} has {actual_major_minor}, need {target_major_minor}")
+            except Exception as e:
+                logger.debug(f"Error searching hostedtoolcache pattern {path_pattern}: {e}")
+        
+        # Try standard Windows Python commands
+        candidates = ["python", "python3"]
+        for candidate in candidates:
+            try:
+                logger.debug(f"Testing candidate: {candidate}")
+                result = self._run_subprocess([candidate, "--version"], 
+                                            capture_output=True, text=True)
+                if result.returncode == 0:
+                    version = result.stdout.strip()
+                    logger.info(f"Found Python executable: {candidate} -> {version}")
+                    
+                    # Parse version to check compatibility
+                    if "Python" in version:
+                        actual_version = version.split()[1]
+                        actual_major_minor = ".".join(actual_version.split(".")[:2])
+                        target_major_minor = ".".join(target_version.split(".")[:2])
+                        
+                        if actual_major_minor == target_major_minor:
+                            logger.info(f"✅ Selected compatible executable: {candidate} (exact match)")
+                            return candidate
+                        else:
+                            logger.debug(f"❌ Version mismatch: {candidate} has {actual_major_minor}, need {target_major_minor}")
+                else:
+                    logger.debug(f"❌ {candidate} returned non-zero exit code: {result.returncode}")
+            except FileNotFoundError:
+                logger.debug(f"❌ {candidate} not found")
+                continue
+        
+        logger.error(f"No suitable Python {target_version} executable found on Windows")
+        raise RuntimeError(f"No suitable Python {target_version} executable found on Windows")
+    
     def _can_use_venv(self, target_version: str) -> bool:
         """Check if we can use venv with a compatible Python version."""
         logger.info(f"Checking for compatible Python {target_version} executable for venv...")
         
-        # Try specific version first
+        # Windows-specific handling
+        if sys.platform == "win32":
+            return self._can_use_venv_windows(target_version)
+        
+        # Unix-like systems (Linux, macOS)
         candidates = [
             f"python{target_version}",
             f"python{target_version.split('.')[0]}",
@@ -399,6 +513,115 @@ class WheelTester:
                 continue
         
         logger.info(f"❌ No compatible Python {target_version} executable found for venv")
+        return False
+    
+    def _can_use_venv_windows(self, target_version: str) -> bool:
+        """Check if we can use venv with a compatible Python version on Windows."""
+        logger.info(f"Checking for compatible Python {target_version} executable for venv on Windows...")
+        
+        # Try py launcher first (most reliable on Windows)
+        try:
+            py_version_arg = f"-{target_version}"
+            logger.debug(f"Testing py launcher: py {py_version_arg}")
+            result = self._run_subprocess(["py", py_version_arg, "--version"], 
+                                        capture_output=True, text=True)
+            if result.returncode == 0:
+                version_output = result.stdout.strip()
+                logger.debug(f"Found executable py {py_version_arg} -> {version_output}")
+                
+                # Parse version like "Python 3.13.5" -> "3.13"
+                if "Python" in version_output:
+                    actual_version = version_output.split()[1]
+                    actual_major_minor = ".".join(actual_version.split(".")[:2])
+                    target_major_minor = ".".join(target_version.split(".")[:2])
+                    
+                    logger.debug(f"Version comparison: {actual_major_minor} vs {target_major_minor}")
+                    
+                    if actual_major_minor == target_major_minor:
+                        logger.info(f"✅ Found compatible Python: py {py_version_arg} ({version_output}) matches target {target_version}")
+                        self._compatible_python_executable = f"py {py_version_arg}"
+                        self._compatible_python_version = version_output
+                        return True
+                    else:
+                        logger.debug(f"❌ Version mismatch: py {py_version_arg} has {actual_major_minor}, need {target_major_minor}")
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            logger.debug(f"py launcher not available or failed for {target_version}")
+        
+        # Try to find Python in hostedtoolcache (GitHub Actions)
+        hostedtoolcache_paths = [
+            Path(f"C:/hostedtoolcache/windows/Python/{target_version}.*/x64/python.exe"),
+            Path(f"C:/hostedtoolcache/windows/Python/{target_version}/x64/python.exe"),
+        ]
+        
+        for path_pattern in hostedtoolcache_paths:
+            try:
+                # Use glob to find matching paths
+                import glob
+                matches = glob.glob(str(path_pattern))
+                if matches:
+                    # Sort to get the latest version
+                    matches.sort(reverse=True)
+                    python_exe = matches[0]
+                    logger.debug(f"Testing hostedtoolcache path: {python_exe}")
+                    
+                    # Test the executable
+                    result = self._run_subprocess([python_exe, "--version"], 
+                                                capture_output=True, text=True)
+                    if result.returncode == 0:
+                        version_output = result.stdout.strip()
+                        logger.debug(f"Found executable {python_exe} -> {version_output}")
+                        
+                        # Parse version like "Python 3.13.5" -> "3.13"
+                        if "Python" in version_output:
+                            actual_version = version_output.split()[1]
+                            actual_major_minor = ".".join(actual_version.split(".")[:2])
+                            target_major_minor = ".".join(target_version.split(".")[:2])
+                            
+                            logger.debug(f"Version comparison: {actual_major_minor} vs {target_major_minor}")
+                            
+                            if actual_major_minor == target_major_minor:
+                                logger.info(f"✅ Found compatible Python: {python_exe} ({version_output}) matches target {target_version}")
+                                self._compatible_python_executable = python_exe
+                                self._compatible_python_version = version_output
+                                return True
+                            else:
+                                logger.debug(f"❌ Version mismatch: {python_exe} has {actual_major_minor}, need {target_major_minor}")
+            except Exception as e:
+                logger.debug(f"Error searching hostedtoolcache pattern {path_pattern}: {e}")
+        
+        # Try standard Windows Python commands
+        candidates = ["python", "python3"]
+        for candidate in candidates:
+            try:
+                logger.debug(f"Testing candidate: {candidate}")
+                result = self._run_subprocess([candidate, "--version"], 
+                                            capture_output=True, text=True)
+                if result.returncode == 0:
+                    version_output = result.stdout.strip()
+                    logger.debug(f"Found executable {candidate} -> {version_output}")
+                    
+                    # Parse version like "Python 3.13.5" -> "3.13"
+                    if "Python" in version_output:
+                        actual_version = version_output.split()[1]
+                        actual_major_minor = ".".join(actual_version.split(".")[:2])
+                        target_major_minor = ".".join(target_version.split(".")[:2])
+                        
+                        logger.debug(f"Version comparison: {actual_major_minor} vs {target_major_minor}")
+                        
+                        if actual_major_minor == target_major_minor:
+                            logger.info(f"✅ Found compatible Python: {candidate} ({version_output}) matches target {target_version}")
+                            self._compatible_python_executable = candidate
+                            self._compatible_python_version = version_output
+                            return True
+                        else:
+                            logger.debug(f"❌ Version mismatch: {candidate} has {actual_major_minor}, need {target_major_minor}")
+                else:
+                    logger.debug(f"❌ {candidate} returned non-zero exit code: {result.returncode}")
+            except FileNotFoundError:
+                logger.debug(f"❌ {candidate} not found")
+                continue
+        
+        logger.info(f"❌ No compatible Python {target_version} executable found for venv on Windows")
         return False
     
     def _run_in_micromamba_env(self, env_name: str, command: List[str], **kwargs) -> subprocess.CompletedProcess:
@@ -539,7 +762,7 @@ class WheelTester:
         try:
             # Get actual Python version in venv
             logger.info("Verifying Python version in virtual environment...")
-            result = self._run_subprocess([python_exe, "--version"], 
+            result = self._run_subprocess(self._make_python_cmd(python_exe, ["--version"]), 
                                         capture_output=True, text=True, check=True)
             actual_python = result.stdout.strip().split()[1]
             logger.info(f"Virtual environment Python version: {actual_python}")
@@ -547,12 +770,12 @@ class WheelTester:
             # Install dependencies
             logger.info("Installing dependencies...")
             logger.info("  Upgrading pip...")
-            self._run_subprocess([python_exe, "-m", "pip", "install", "--upgrade", "pip"], 
+            self._run_subprocess(self._make_python_cmd(python_exe, ["-m", "pip", "install", "--upgrade", "pip"]), 
                                check=True, capture_output=True)
             
             logger.info("  Installing test dependencies...")
-            self._run_subprocess([python_exe, "-m", "pip", "install", "pytest", "numpy", "scipy", 
-                                "matplotlib", "pyproj"], check=True, capture_output=True)
+            self._run_subprocess(self._make_python_cmd(python_exe, ["-m", "pip", "install", "pytest", "numpy", "scipy", 
+                                "matplotlib", "pyproj"]), check=True, capture_output=True)
             
             # Install the wheel
             logger.info(f"Installing wheel: {wheel_path.name}")
@@ -560,7 +783,7 @@ class WheelTester:
             logger.info(f"  Python executable: {python_exe}")
             
             try:
-                install_cmd = [python_exe, "-m", "pip", "install", str(wheel_path.resolve())]
+                install_cmd = self._make_python_cmd(python_exe, ["-m", "pip", "install", str(wheel_path.resolve())])
                 logger.info(f"  Command: {' '.join(install_cmd)}")
                 
                 result = self._run_subprocess(install_cmd, check=True, capture_output=True, text=True)
@@ -652,7 +875,7 @@ class WheelTester:
         """Run import tests using specified Python executable."""
         script_path = Path(__file__).parent / "wheel_testing" / "import_test.py"
         
-        result = self._run_subprocess([python_exe, str(script_path)], 
+        result = self._run_subprocess(self._make_python_cmd(python_exe, [str(script_path)]), 
                                      capture_output=True, text=True, check=True)
         
         logger.info("Import tests passed successfully")
@@ -675,7 +898,7 @@ class WheelTester:
         script_path = Path(__file__).parent / "wheel_testing" / "test_suite.py"
         tests_dir = Path(__file__).parent.parent / "tests"
         
-        result = self._run_subprocess([python_exe, str(script_path), "--tests-dir", str(tests_dir)], 
+        result = self._run_subprocess(self._make_python_cmd(python_exe, [str(script_path), "--tests-dir", str(tests_dir)]), 
                                      capture_output=True, text=True, check=True)
         
         logger.info("Test suite passed successfully")
@@ -701,13 +924,13 @@ class WheelTester:
         """Generate performance visualization (fallback)."""
         script_path = Path(__file__).parent / "wheel_testing" / "performance_test.py"
         
-        result = self._run_subprocess([
-            python_exe, str(script_path),
+        result = self._run_subprocess(self._make_python_cmd(python_exe, [
+            str(script_path),
             "--wheel-name", wheel_path.name,
             "--target-python", target_python,
             "--platform-info", self.platform_name,
             "--output-dir", str(self.results_dir)
-        ], capture_output=True, text=True, check=True)
+        ]), capture_output=True, text=True, check=True)
         
         return self._parse_performance_results(result.stdout)
     
