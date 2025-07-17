@@ -16,13 +16,10 @@ jobs:
         shell: bash -l {0}
     steps:
     - uses: actions/checkout@v2
-    - uses: conda-incubator/setup-miniconda@v2
+    - uses: mamba-org/setup-micromamba@v1
       with:
-        miniforge-variant: Mambaforge
-        channels: conda-forge
-        activate-environment: cutde
         environment-file: environment.yml
-        python-version: ${{ matrix.python-version }}
+        create-args: python=${{ matrix.python-version }}.*
     - name: Install cutde
       run: |
         pip install --no-use-pep517 --no-deps --disable-pip-version-check -e .
