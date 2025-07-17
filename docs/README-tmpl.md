@@ -85,7 +85,11 @@ Use:
 stress = cutde.fullspace.strain_to_stress(strain, sm, nu)
 ```
 
-to convert from stress to strain assuming isotropic linear elasticity. `sm` is the shear modulus and `nu` is the Poisson ratio.
+to convert from stress to strain assuming isotropic linear elasticity. `sm` is the shear modulus and `nu` is the Poisson ratio. The `strain` array here is expected to have a shape `(N, 6)`. In case you have a matrix or other shaped array, this snippet might help:
+
+```
+strain_to_stress(strain_matrix.reshape((-1, 6)), mu, nu).reshape(strain_matrix.shape)
+```
 
 ## All pairs interactions matrix
 
@@ -233,6 +237,8 @@ For developing `cutde`, clone the repo and set up your conda environment based o
 ```
 conda env create
 ```
+
+Then, `pip install -e .`.
 
 Next, for developing on a GPU, please install either `pycuda` or `pyopencl` as instructed in the Installation section above.
 
