@@ -1,0 +1,326 @@
+name: Build and Release Pipeline
+
+on: 
+  push:
+    branches:
+      - master
+  pull_request:
+  release:
+    types:
+      - published
+
+jobs:
+  build_sdist:
+    name: Build source distribution
+    runs-on: ubuntu-latest
+    permissions:
+      # These are required for build provenance attestations
+      attestations: write
+      id-token: write
+      # This is required to checkout the repository
+      contents: read
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+        with:
+          # Full history is required for setuptools-scm to determine version
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Build source distribution with attestations
+        uses: hynek/build-and-inspect-python-package@v2
+        with:
+          # Generate build provenance attestations to establish SLSA Build Level 2+
+          # Only enable attestations for trusted workflows (not fork PRs)
+          attest-build-provenance-github: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+          # Skip building wheels since we build them separately via cibuildwheel
+          skip-wheel: 'true'
+
+  build_wheels:
+    name: Build wheels on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    permissions:
+      # These are required for build provenance
+      attestations: write
+      id-token: write
+      # This is required to checkout the repository
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        # macos-13 is an intel runner, macos-14 is apple silicon
+        # Note: Windows ARM64 (windows-11-arm) isn't actually supported by cibuildwheel's
+        # Meson backend—it only wires up setuptools and setuptools_rust on ARM, and its
+        # VS-toolchain detection doesn't configure cl.exe for Meson builds. Skipping this
+        # platform until official ARM64 Meson support lands.
+        os: [ubuntu-latest, ubuntu-24.04-arm, windows-latest, macos-13, macos-14]
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Install libomp and set up environment
+        if: runner.os == 'macOS'
+        run: |
+          brew install libomp llvm
+
+          LLVM_PREFIX=$(brew --prefix llvm)
+          LIBOMP_PREFIX=$(brew --prefix libomp)
+
+          # Tell setuptools which compiler to call
+          echo "CC=${LLVM_PREFIX}/bin/clang"    >> $GITHUB_ENV
+          echo "CXX=${LLVM_PREFIX}/bin/clang++" >> $GITHUB_ENV
+
+          # Point -fopenmp at the right headers + libs
+          echo "CPPFLAGS=-I${LIBOMP_PREFIX}/include" >> $GITHUB_ENV
+          echo "LDFLAGS=-L${LIBOMP_PREFIX}/lib"       >> $GITHUB_ENV
+
+          # Prepend Homebrew's LLVM to PATH so any clang/clang++ calls hit the right one
+          echo "PATH=${LLVM_PREFIX}/bin:$PATH"      >> $GITHUB_ENV
+
+      - name: Figure out macOS deployment target
+        if: runner.os == 'macOS'
+        run: |
+          # e.g. "13.4.1" → "13.4"
+          OS_VER=$(sw_vers -productVersion | cut -d. -f1-2)
+          echo "MACOSX_DEPLOYMENT_TARGET=${OS_VER}" >> $GITHUB_ENV
+
+      - name: Build wheels with cibuildwheel
+        uses: pypa/cibuildwheel@v3.0.1
+
+      - name: Generate build provenance attestations for wheels
+        # Only generate attestations for trusted workflows (not fork PRs)
+        if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+        uses: actions/attest-build-provenance@v1
+        with:
+          # Generate SLSA Build Level 2+ provenance for all built wheels
+          subject-path: 'wheelhouse/*.whl'
+
+      - name: Upload wheel artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: cibw-wheels-${{ matrix.os }}-${{ strategy.job-index }}
+          path: ./wheelhouse/*.whl
+
+  test_wheels:
+    name: Test wheels on ${{ matrix.platform }}
+    runs-on: ${{ matrix.os }}
+    needs: build_wheels
+    permissions:
+      # This is required to checkout the repository
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: ubuntu-latest
+            python-cmd: python
+            setup-python: true
+            python-filter: ""
+          - os: ubuntu-24.04-arm
+            platform: ubuntu-24.04-arm
+            python-cmd: python
+            setup-python: true
+            python-filter: ""
+          - os: windows-latest
+            platform: windows-latest
+            python-cmd: python
+            setup-python: true
+            python-filter: ""
+          - os: macos-13
+            platform: macos-13
+            python-cmd: python
+            setup-python: true
+            python-filter: ""
+          - os: macos-14
+            platform: macos-14
+            python-cmd: python
+            setup-python: true
+            python-filter: ""
+          - os: ubuntu-latest
+          #   platform: alpine-musllinux-cp38
+          #   container: python:3.8-alpine
+          #   python-cmd: python
+          #   setup-python: false
+          #   python-filter: "-cp38-"
+          # - os: ubuntu-latest
+          #   # This can be made to work by adding:
+          #   #   apk add build-base gcc proj-util proj-dev
+          #   #   PROJ_DIR=/usr pip install pyproj==3.6.1
+          #   # but it doesn't work for Python 3.8.
+          #   platform: alpine-musllinux-cp39
+          #   container: python:3.9-alpine
+          #   python-cmd: python
+          #   setup-python: false
+          #   python-filter: "-cp39-"
+          # - os: ubuntu-latest
+            platform: alpine-musllinux-cp310
+            container: python:3.10-alpine
+            python-cmd: python
+            setup-python: false
+            python-filter: "-cp310-"
+          - os: ubuntu-latest
+            platform: alpine-musllinux-cp311
+            container: python:3.11-alpine
+            python-cmd: python
+            setup-python: false
+            python-filter: "-cp311-"
+          - os: ubuntu-latest
+            platform: alpine-musllinux-cp312
+            container: python:3.12-alpine
+            python-cmd: python
+            setup-python: false
+            python-filter: "-cp312-"
+          - os: ubuntu-latest
+            platform: alpine-musllinux-cp313
+            container: python:3.13-alpine
+            python-cmd: python
+            setup-python: false
+            python-filter: "-cp313-"
+
+    container: ${{ matrix.container }}
+
+    steps:
+      - name: Install system dependencies (Alpine only)
+        if: startsWith(matrix.platform, 'alpine-musllinux')
+        run: |
+          apk add --no-cache \
+            bash \
+            git \
+            build-base \
+            libffi-dev \
+            openssl-dev \
+            curl
+
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Set up Python (non-Alpine)
+        if: matrix.setup-python
+        uses: actions/setup-python@v5
+        with:
+          python-version: |
+            3.8
+            3.9
+            3.10
+            3.11
+            3.12
+            3.13
+
+      - name: Install script dependencies
+        run: |
+          ${{ matrix.python-cmd }} -m pip install --upgrade pip
+          ${{ matrix.python-cmd }} -m pip install -r cibuildwheel-scripts/requirements.txt
+
+      - name: Download all wheel artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./all-wheels
+
+      - name: Organize wheels
+        shell: bash
+        run: |
+          # Create a flat directory with all wheels
+          mkdir -p ./wheels-flat
+          find ./all-wheels -name "*.whl" -exec cp {} ./wheels-flat/ \;
+          
+          # Skip win32 wheels to avoid 64-bit vs 32-bit Python mismatch
+          echo "Removing win32 wheels (64-bit Python can't test 32-bit wheels)..."
+          find ./wheels-flat -name "*win32*.whl" -delete
+          
+          # Filter wheels for Alpine (only Python specific versions)
+          if [ "${{ matrix.python-filter }}" != "" ]; then
+            echo "Filtering wheels for ${{ matrix.platform }} (keeping only ${{ matrix.python-filter }} wheels)..."
+            mkdir -p ./wheels-filtered
+            find ./wheels-flat -name "*${{ matrix.python-filter }}*.whl" -exec cp {} ./wheels-filtered/ \;
+            rm -rf ./wheels-flat
+            mv ./wheels-filtered ./wheels-flat
+          fi
+          
+          echo "Wheels organized:"
+          ls -la ./wheels-flat/
+
+      - name: Test all wheels
+        run: |
+          ${{ matrix.python-cmd }} cibuildwheel-scripts/test_wheels.py --wheels-dir ./wheels-flat --results-dir ./wheel-results/${{ matrix.platform }}
+
+      - name: Generate summary for this platform
+        if: always()
+        run: |
+          ${{ matrix.python-cmd }} cibuildwheel-scripts/generate_summary.py --results-dir ./wheel-results/${{ matrix.platform }} --github-summary
+
+      - name: Upload wheel test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheel-test-results-${{ matrix.platform }}
+          path: ./wheel-results/
+
+  performance_summary:
+    name: Combined Performance Summary
+    runs-on: ubuntu-latest
+    needs: [test_wheels]
+    if: always()
+    permissions:
+      # This is required to checkout the repository
+      contents: read
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install script dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r cibuildwheel-scripts/requirements.txt
+
+      - name: Download all wheel test results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: wheel-test-results-*
+          path: ./all-results
+          merge-multiple: true
+
+      - name: Generate consolidated summary
+        run: |
+          python cibuildwheel-scripts/generate_summary.py --results-dir ./all-results --github-summary
+
+      - name: Upload consolidated performance summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-summary
+          path: ./all-results/
+
+  publish-package:
+    # Don't publish from forks
+    if: github.repository_owner == 'cutde-org' && github.event_name == 'release' && github.event.action == 'published'
+    # Use the `release` GitHub environment to protect the Trusted Publishing (OIDC)
+    # workflow by requiring signoff from a maintainer.
+    environment: release
+    needs: [build_sdist, build_wheels]
+    runs-on: ubuntu-latest
+    permissions:
+      # write id-token is necessary for trusted publishing (OIDC)
+      id-token: write
+    steps:
+      - name: Download Source Distribution Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          # The build-and-inspect-python-package action invokes upload-artifact.
+          # These are the correct arguments from that action.
+          name: Packages
+          path: dist
+      - name: Download Wheel Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: cibw-wheels-*
+          path: dist
+          merge-multiple: true
+      - name: Publish Package to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        # Implicitly attests that the packages were uploaded in the context of this workflow.
