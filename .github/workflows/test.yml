@@ -1,6 +1,6 @@
 name: Test
 
-on: [push]
+on: [push, pull_request]
 
 jobs:
   test:
@@ -8,7 +8,7 @@ jobs:
       fail-fast: false
       matrix:
         os: ["ubuntu-latest", "macos-latest", "windows-latest"]
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
     name: Test (${{ matrix.python-version }}, ${{ matrix.os }})
     runs-on:  ${{ matrix.os }}
     defaults:
@@ -16,13 +16,10 @@ jobs:
         shell: bash -l {0}
     steps:
     - uses: actions/checkout@v2
-    - uses: conda-incubator/setup-miniconda@v2
+    - uses: mamba-org/setup-micromamba@v1
       with:
-        miniforge-variant: Mambaforge
-        channels: conda-forge
-        activate-environment: cutde
         environment-file: environment.yml
-        python-version: ${{ matrix.python-version }}
+        create-args: python=${{ matrix.python-version }}.*
     - name: Install cutde
       run: |
         pip install --no-use-pep517 --no-deps --disable-pip-version-check -e .
