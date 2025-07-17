@@ -94,37 +94,37 @@ jobs:
             setup-python: true
             python-filter: ""
           - os: ubuntu-latest
-            platform: alpine-musllinux
+            platform: alpine-musllinux-cp38
             container: python:3.8-alpine
             python-cmd: python
             setup-python: false
             python-filter: "-cp38-"
           - os: ubuntu-latest
-            platform: alpine-musllinux
+            platform: alpine-musllinux-cp39
             container: python:3.9-alpine
             python-cmd: python
             setup-python: false
             python-filter: "-cp39-"
           - os: ubuntu-latest
-            platform: alpine-musllinux
+            platform: alpine-musllinux-cp310
             container: python:3.10-alpine
             python-cmd: python
             setup-python: false
             python-filter: "-cp310-"
           - os: ubuntu-latest
-            platform: alpine-musllinux
+            platform: alpine-musllinux-cp311
             container: python:3.11-alpine
             python-cmd: python
             setup-python: false
             python-filter: "-cp311-"
           - os: ubuntu-latest
-            platform: alpine-musllinux
+            platform: alpine-musllinux-cp312
             container: python:3.12-alpine
             python-cmd: python
             setup-python: false
             python-filter: "-cp312-"
           - os: ubuntu-latest
-            platform: alpine-musllinux
+            platform: alpine-musllinux-cp313
             container: python:3.13-alpine
             python-cmd: python
             setup-python: false
@@ -134,7 +134,7 @@ jobs:
 
     steps:
       - name: Install system dependencies (Alpine only)
-        if: matrix.platform == 'alpine-musllinux'
+        if: startsWith(matrix.platform, 'alpine-musllinux')
         run: |
           apk add --no-cache \
             bash \
