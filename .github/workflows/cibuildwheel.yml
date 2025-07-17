@@ -94,18 +94,22 @@ jobs:
             setup-python: true
             python-filter: ""
           - os: ubuntu-latest
-            platform: alpine-musllinux-cp38
-            container: python:3.8-alpine
-            python-cmd: python
-            setup-python: false
-            python-filter: "-cp38-"
-          - os: ubuntu-latest
-            platform: alpine-musllinux-cp39
-            container: python:3.9-alpine
-            python-cmd: python
-            setup-python: false
-            python-filter: "-cp39-"
-          - os: ubuntu-latest
+          #   platform: alpine-musllinux-cp38
+          #   container: python:3.8-alpine
+          #   python-cmd: python
+          #   setup-python: false
+          #   python-filter: "-cp38-"
+          # - os: ubuntu-latest
+          #   # This can be made to work by adding:
+          #   #   apk add build-base gcc proj-util proj-dev
+          #   #   PROJ_DIR=/usr pip install pyproj==3.6.1
+          #   # but it doesn't work for Python 3.8.
+          #   platform: alpine-musllinux-cp39
+          #   container: python:3.9-alpine
+          #   python-cmd: python
+          #   setup-python: false
+          #   python-filter: "-cp39-"
+          # - os: ubuntu-latest
             platform: alpine-musllinux-cp310
             container: python:3.10-alpine
             python-cmd: python
