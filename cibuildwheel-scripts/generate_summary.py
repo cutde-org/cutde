@@ -11,7 +11,7 @@ import os
 import sys
 from collections import defaultdict
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 # Configure logging
 logging.basicConfig(
@@ -225,7 +225,7 @@ class SummaryGenerator:
             return "\n".join(lines)
 
         # Group by platform for better organization
-        platform_groups = {}
+        platform_groups: Dict[str, List[Tuple[str, str]]] = {}
         for png_file in sorted(png_files):
             filename = png_file.name
 
@@ -474,13 +474,28 @@ def main():
     if args.output:
         generator.save_summary(args.output, args.format)
     else:
-        # Print to console
-        if args.format == "console":
-            print(generator.generate_console_summary())
-        elif args.format == "github":
-            print(generator.generate_github_actions_summary())
-        else:
-            print(generator.generate_github_actions_summary())
+        # Print to console only if not writing to GitHub summary
+        if not args.github_summary:
+            try:
+                # Try to reconfigure stdout for UTF-8 if possible (Python 3.7+)
+                if hasattr(sys.stdout, "reconfigure"):
+                    sys.stdout.reconfigure(encoding="utf-8")  # type: ignore
+            except (AttributeError, OSError):
+                pass
+
+            try:
+                if args.format == "console":
+                    print(generator.generate_console_summary())
+                elif args.format == "github":
+                    print(generator.generate_github_actions_summary())
+                else:
+                    print(generator.generate_github_actions_summary())
+            except UnicodeEncodeError:
+                # Fallback for Windows console encoding issues
+                logger.warning(
+                    "Console encoding doesn't support Unicode characters. "
+                    "Summary written to GitHub Actions only."
+                )
 
     return 0
 
