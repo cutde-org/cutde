@@ -77,11 +77,10 @@ def avoid_apple_cpu(ctx):
 
 
 def ensure_initialized():
-    global gpu_initialized
     if not gpu_initialized:
         ctx = pyopencl.create_some_context()
         ctx = avoid_apple_cpu(ctx)
-        initialize_with_ctx(ctx)
+        initialize_with_ctx(ctx)  # this updates gpu_initialized
 
 
 def ptr(arr):
