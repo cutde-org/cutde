@@ -197,20 +197,22 @@ jobs:
 
       - name: Test all wheels
         run: |
-          ${{ matrix.python-cmd }} scripts/test_wheels.py --wheels-dir ./wheels-flat --results-dir ./wheel-results
+          ${{ matrix.python-cmd }} scripts/test_wheels.py --wheels-dir ./wheels-flat --results-dir ./wheel-results/${{ matrix.platform }}
 
       - name: Generate summary for this platform
+        if: always()
         run: |
-          ${{ matrix.python-cmd }} scripts/generate_summary.py --results-dir ./wheel-results --github-summary
+          ${{ matrix.python-cmd }} scripts/generate_summary.py --results-dir ./wheel-results/${{ matrix.platform }} --github-summary
 
       - name: Upload wheel test results
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: wheel-test-results-${{ matrix.platform }}
           path: ./wheel-results/
 
   performance_summary:
-    name: Performance Summary
+    name: Combined Performance Summary
     runs-on: ubuntu-latest
     needs: [test_wheels]
     if: always()

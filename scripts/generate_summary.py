@@ -29,21 +29,32 @@ class SummaryGenerator:
 
     def _load_all_results(self) -> List[Dict]:
         """Load all test results from the results directory."""
-        results = []
+        results: List[Dict] = []
+
+        # Check if results directory exists
+        if not self.results_dir.exists():
+            logger.warning(f"Results directory does not exist: {self.results_dir}")
+            return results
 
         # Look for result files
-        for result_file in self.results_dir.rglob("test_results.json"):
+        result_files = list(self.results_dir.rglob("test_results.json"))
+        if not result_files:
+            logger.warning(f"No test_results.json files found in {self.results_dir}")
+            return results
+
+        for result_file in result_files:
             try:
-                with open(result_file, "r") as f:
+                with open(result_file, "r", encoding="utf-8") as f:
                     data = json.load(f)
                     if isinstance(data, list):
                         results.extend(data)
                     else:
                         results.append(data)
+                logger.debug(f"Loaded {len(data) if isinstance(data, list) else 1} results from {result_file}")
             except Exception as e:
                 logger.warning(f"Failed to load results from {result_file}: {e}")
 
-        logger.info(f"Loaded {len(results)} test results")
+        logger.info(f"Loaded {len(results)} test results from {len(result_files)} files")
         return results
 
     def get_statistics(self) -> Dict:
