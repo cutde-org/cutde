@@ -761,69 +761,79 @@ WITHIN_KERNEL Real6 AngSetupFSC_S(Real3 obs, Real3 slip, Real3 PA, Real3 PB, Rea
 </%def>
 
 <%def name="disp_hs(tri_prefix)">
-    Real3 summed_terms;
-    {
-        // Main dislocation
-        ${disp_fs(tri_prefix)}
+    Real3 full_out;
+    if (is_degenerate_triangle(${tri_prefix}0, ${tri_prefix}1, ${tri_prefix}2)) {
+        full_out = make3(0.0, 0.0, 0.0);
+    } else {
+        Real3 summed_terms;
+        {
+            // Main dislocation
+            ${disp_fs(tri_prefix)}
 
-        summed_terms = full_out;
+            summed_terms = full_out;
 
-        // Harmonic free surface correction
-        Real3 efcs_slip = inv_transform3(Vnorm, Vstrike, Vdip, slip);
-        Real3 uvw0 = AngSetupFSC(obs, efcs_slip, ${tri_prefix}0, ${tri_prefix}1, nu);
-        Real3 uvw1 = AngSetupFSC(obs, efcs_slip, ${tri_prefix}1, ${tri_prefix}2, nu);
-        Real3 uvw2 = AngSetupFSC(obs, efcs_slip, ${tri_prefix}2, ${tri_prefix}0, nu);
-        Real3 fsc_term = add3(add3(uvw0, uvw1), uvw2);
+            // Harmonic free surface correction
+            Real3 efcs_slip = inv_transform3(Vnorm, Vstrike, Vdip, slip);
+            Real3 uvw0 = AngSetupFSC(obs, efcs_slip, ${tri_prefix}0, ${tri_prefix}1, nu);
+            Real3 uvw1 = AngSetupFSC(obs, efcs_slip, ${tri_prefix}1, ${tri_prefix}2, nu);
+            Real3 uvw2 = AngSetupFSC(obs, efcs_slip, ${tri_prefix}2, ${tri_prefix}0, nu);
+            Real3 fsc_term = add3(add3(uvw0, uvw1), uvw2);
 
-        summed_terms = add3(fsc_term, summed_terms);
+            summed_terms = add3(fsc_term, summed_terms);
+        }
+        {
+            Real3 image_tri0 = tri0;
+            Real3 image_tri1 = tri1;
+            Real3 image_tri2 = tri2;
+
+            image_tri0.z *= -1;
+            image_tri1.z *= -1;
+            image_tri2.z *= -1;
+
+            // Image dislocation
+            ${disp_fs("image_tri", "true")}
+
+            summed_terms = add3(summed_terms, full_out);
+        }
+        full_out = summed_terms;
     }
-    {
-        Real3 image_tri0 = tri0;
-        Real3 image_tri1 = tri1;
-        Real3 image_tri2 = tri2;
-
-        image_tri0.z *= -1;
-        image_tri1.z *= -1;
-        image_tri2.z *= -1;
-
-        // Image dislocation
-        ${disp_fs("image_tri", "true")}
-
-        summed_terms = add3(summed_terms, full_out);
-    }
-    Real3 full_out = summed_terms;
 </%def>
 
 <%def name="strain_hs(tri_prefix)">
-    Real6 summed_terms;
-    {
-        // Main dislocation
-        ${strain_fs(tri_prefix)}
+    Real6 full_out;
+    if (is_degenerate_triangle(${tri_prefix}0, ${tri_prefix}1, ${tri_prefix}2)) {
+        full_out = make6(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+    } else {
+        Real6 summed_terms;
+        {
+            // Main dislocation
+            ${strain_fs(tri_prefix)}
 
-        summed_terms = full_out;
+            summed_terms = full_out;
 
-        // Harmonic free surface correction
-        Real3 efcs_slip = inv_transform3(Vnorm, Vstrike, Vdip, slip);
-        Real6 uvw0 = AngSetupFSC_S(obs, efcs_slip, ${tri_prefix}0, ${tri_prefix}1, nu);
-        Real6 uvw1 = AngSetupFSC_S(obs, efcs_slip, ${tri_prefix}1, ${tri_prefix}2, nu);
-        Real6 uvw2 = AngSetupFSC_S(obs, efcs_slip, ${tri_prefix}2, ${tri_prefix}0, nu);
-        Real6 fsc_term = add6(add6(uvw0, uvw1), uvw2);
+            // Harmonic free surface correction
+            Real3 efcs_slip = inv_transform3(Vnorm, Vstrike, Vdip, slip);
+            Real6 uvw0 = AngSetupFSC_S(obs, efcs_slip, ${tri_prefix}0, ${tri_prefix}1, nu);
+            Real6 uvw1 = AngSetupFSC_S(obs, efcs_slip, ${tri_prefix}1, ${tri_prefix}2, nu);
+            Real6 uvw2 = AngSetupFSC_S(obs, efcs_slip, ${tri_prefix}2, ${tri_prefix}0, nu);
+            Real6 fsc_term = add6(add6(uvw0, uvw1), uvw2);
 
-        summed_terms = add6(fsc_term, summed_terms);
+            summed_terms = add6(fsc_term, summed_terms);
+        }
+        {
+            Real3 image_tri0 = tri0;
+            Real3 image_tri1 = tri1;
+            Real3 image_tri2 = tri2;
+
+            image_tri0.z *= -1;
+            image_tri1.z *= -1;
+            image_tri2.z *= -1;
+
+            // Image dislocation
+            ${strain_fs("image_tri", "true")}
+
+            summed_terms = add6(summed_terms, full_out);
+        }
+        full_out = summed_terms;
     }
-    {
-        Real3 image_tri0 = tri0;
-        Real3 image_tri1 = tri1;
-        Real3 image_tri2 = tri2;
-
-        image_tri0.z *= -1;
-        image_tri1.z *= -1;
-        image_tri2.z *= -1;
-
-        // Image dislocation
-        ${strain_fs("image_tri", "true")}
-
-        summed_terms = add6(summed_terms, full_out);
-    }
-    Real6 full_out = summed_terms;
 </%def>
