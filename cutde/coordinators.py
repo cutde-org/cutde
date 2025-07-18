@@ -73,9 +73,9 @@ def solve_types(obs_pts, tris, slips):
             )
             out_arr = out_arr.astype(float_type)
 
-        if out_arr.flags.f_contiguous:
+        if not out_arr.flags.c_contiguous:
             warnings.warn(
-                f"The {name} input array has Fortran ordering. "
+                f"The {name} input array is not C-contiguous. "
                 "Converting to C ordering. This may be expensive."
             )
             out_arr = np.ascontiguousarray(out_arr)
