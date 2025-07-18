@@ -618,83 +618,92 @@ WITHIN_KERNEL Real6 AngSetupFSC_S(Real3 obs, Real3 slip, Real3 PA, Real3 PB, Rea
 </%def> //END OF defs()
 
 <%def name="disp_fs(tri_prefix, is_halfspace='false')">
-    ${setup_tde(tri_prefix, is_halfspace)}
-
-    Real3 out;
-    if (mode == 1) {
-        // Calculate first angular dislocation contribution
-        Real3 r1Tp = TDSetupD(transformed_obs,A,slip,nu,transformed_tri0, negate3(e13));
-        // Calculate second angular dislocation contribution
-        Real3 r2Tp = TDSetupD(transformed_obs,B,slip,nu,transformed_tri1, e12);
-        // Calculate third angular dislocation contribution
-        Real3 r3Tp = TDSetupD(transformed_obs,C,slip,nu,transformed_tri2, e23);
-        out = add3(add3(r1Tp, r2Tp), r3Tp);
-    } else if (mode == -1) {
-        // Calculate first angular dislocation contribution
-        Real3 r1Tn = TDSetupD(transformed_obs,A,slip,nu,transformed_tri0,e13);
-        // Calculate second angular dislocation contribution
-        Real3 r2Tn = TDSetupD(transformed_obs,B,slip,nu,transformed_tri1,negate3(e12));
-        // Calculate third angular dislocation contribution
-        Real3 r3Tn = TDSetupD(transformed_obs,C,slip,nu,transformed_tri2,negate3(e23));
-        out = add3(add3(r1Tn, r2Tn), r3Tn);
+    Real3 full_out;
+    if (is_degenerate_triangle(${tri_prefix}0, ${tri_prefix}1, ${tri_prefix}2)) {
+        full_out = make3(0.0, 0.0, 0.0);
     } else {
-        out = make3(NAN, NAN, NAN);
+        ${setup_tde(tri_prefix, is_halfspace)}
+
+        Real3 out;
+        if (mode == 1) {
+            // Calculate first angular dislocation contribution
+            Real3 r1Tp = TDSetupD(transformed_obs,A,slip,nu,transformed_tri0, negate3(e13));
+            // Calculate second angular dislocation contribution
+            Real3 r2Tp = TDSetupD(transformed_obs,B,slip,nu,transformed_tri1, e12);
+            // Calculate third angular dislocation contribution
+            Real3 r3Tp = TDSetupD(transformed_obs,C,slip,nu,transformed_tri2, e23);
+            out = add3(add3(r1Tp, r2Tp), r3Tp);
+        } else if (mode == -1) {
+            // Calculate first angular dislocation contribution
+            Real3 r1Tn = TDSetupD(transformed_obs,A,slip,nu,transformed_tri0,e13);
+            // Calculate second angular dislocation contribution
+            Real3 r2Tn = TDSetupD(transformed_obs,B,slip,nu,transformed_tri1,negate3(e12));
+            // Calculate third angular dislocation contribution
+            Real3 r3Tn = TDSetupD(transformed_obs,C,slip,nu,transformed_tri2,negate3(e23));
+            out = add3(add3(r1Tn, r2Tn), r3Tn);
+        } else {
+            out = make3(NAN, NAN, NAN);
+        }
+
+        Real3 a = make3(
+            -transformed_obs.x,
+            transformed_tri0.y - transformed_obs.y,
+            transformed_tri0.z - transformed_obs.z
+        );
+        Real3 b = negate3(transformed_obs);
+        Real3 c = make3(
+            -transformed_obs.x,
+            transformed_tri2.y - transformed_obs.y,
+            transformed_tri2.z - transformed_obs.z
+        );
+        Real na = length3(a);
+        Real nb = length3(b);
+        Real nc = length3(c);
+
+        Real FiN = (a.x*(b.y*c.z-b.z*c.y)- \
+               a.y*(b.x*c.z-b.z*c.x)+ \
+               a.z*(b.x*c.y-b.y*c.x));
+        Real FiD = (na*nb*nc+dot3(a,b)*nc+dot3(a,c)*nb+dot3(b,c)*na);
+        Real Fi = -2*atan2(FiN,FiD)/4/M_PI;
+
+        // Calculate the complete displacement vector components in TDCS
+        out = add3(out, mul_scalar3(slip,Fi));
+
+        // Transform the complete displacement vector components from TDCS into EFCS
+        full_out = inv_transform3(Vnorm, Vstrike, Vdip, out);
     }
-
-    Real3 a = make3(
-        -transformed_obs.x,
-        transformed_tri0.y - transformed_obs.y,
-        transformed_tri0.z - transformed_obs.z
-    );
-    Real3 b = negate3(transformed_obs);
-    Real3 c = make3(
-        -transformed_obs.x,
-        transformed_tri2.y - transformed_obs.y,
-        transformed_tri2.z - transformed_obs.z
-    );
-    Real na = length3(a);
-    Real nb = length3(b);
-    Real nc = length3(c);
-
-    Real FiN = (a.x*(b.y*c.z-b.z*c.y)- \
-           a.y*(b.x*c.z-b.z*c.x)+ \
-           a.z*(b.x*c.y-b.y*c.x));
-    Real FiD = (na*nb*nc+dot3(a,b)*nc+dot3(a,c)*nb+dot3(b,c)*na);
-    Real Fi = -2*atan2(FiN,FiD)/4/M_PI;
-
-    // Calculate the complete displacement vector components in TDCS
-    out = add3(out, mul_scalar3(slip,Fi));
-
-    // Transform the complete displacement vector components from TDCS into EFCS
-    Real3 full_out = inv_transform3(Vnorm, Vstrike, Vdip, out);
 </%def>
 
 <%def name="strain_fs(tri_prefix, is_halfspace='false')">
-    ${setup_tde(tri_prefix, is_halfspace)}
-
-    Real6 out;
-    if (mode == 1) {
-        // Calculate first angular dislocation contribution
-        Real6 comp1 = TDSetupS(transformed_obs,A,slip,nu,transformed_tri0, negate3(e13));
-        // Calculate second angular dislocation contribution
-        Real6 comp2 = TDSetupS(transformed_obs,B,slip,nu,transformed_tri1, e12);
-        // Calculate third angular dislocation contribution
-        Real6 comp3 = TDSetupS(transformed_obs,C,slip,nu,transformed_tri2, e23);
-        out = add6(add6(comp1, comp2), comp3);
-    } else if (mode == -1) {
-        // Calculate first angular dislocation contribution
-        Real6 comp1 = TDSetupS(transformed_obs,A,slip,nu,transformed_tri0,e13);
-        // Calculate second angular dislocation contribution
-        Real6 comp2 = TDSetupS(transformed_obs,B,slip,nu,transformed_tri1,negate3(e12));
-        // Calculate third angular dislocation contribution
-        Real6 comp3 = TDSetupS(transformed_obs,C,slip,nu,transformed_tri2,negate3(e23));
-        out = add6(add6(comp1, comp2), comp3);
+    Real6 full_out;
+    if (is_degenerate_triangle(${tri_prefix}0, ${tri_prefix}1, ${tri_prefix}2)) {
+        full_out = make6(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
     } else {
-        out = make6(NAN, NAN, NAN, NAN, NAN, NAN);
+        ${setup_tde(tri_prefix, is_halfspace)}
+
+        Real6 out;
+        if (mode == 1) {
+            // Calculate first angular dislocation contribution
+            Real6 comp1 = TDSetupS(transformed_obs,A,slip,nu,transformed_tri0, negate3(e13));
+            // Calculate second angular dislocation contribution
+            Real6 comp2 = TDSetupS(transformed_obs,B,slip,nu,transformed_tri1, e12);
+            // Calculate third angular dislocation contribution
+            Real6 comp3 = TDSetupS(transformed_obs,C,slip,nu,transformed_tri2, e23);
+            out = add6(add6(comp1, comp2), comp3);
+        } else if (mode == -1) {
+            // Calculate first angular dislocation contribution
+            Real6 comp1 = TDSetupS(transformed_obs,A,slip,nu,transformed_tri0,e13);
+            // Calculate second angular dislocation contribution
+            Real6 comp2 = TDSetupS(transformed_obs,B,slip,nu,transformed_tri1,negate3(e12));
+            // Calculate third angular dislocation contribution
+            Real6 comp3 = TDSetupS(transformed_obs,C,slip,nu,transformed_tri2,negate3(e23));
+            out = add6(add6(comp1, comp2), comp3);
+        } else {
+            out = make6(NAN, NAN, NAN, NAN, NAN, NAN);
+        }
+
+        full_out = tensor_transform3(Vnorm, Vstrike, Vdip, out);
     }
-
-
-    Real6 full_out = tensor_transform3(Vnorm, Vstrike, Vdip, out);
 </%def>
 
 <%def name="setup_tde(tri_prefix, is_halfspace)">
