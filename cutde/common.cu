@@ -765,10 +765,12 @@ WITHIN_KERNEL Real6 AngSetupFSC_S(Real3 obs, Real3 slip, Real3 PA, Real3 PB, Rea
     if (is_degenerate_triangle(${tri_prefix}0, ${tri_prefix}1, ${tri_prefix}2)) {
         full_out = make3(0.0, 0.0, 0.0);
     } else {
+        ${setup_tde(tri_prefix, "false")}
+        
         Real3 summed_terms;
         {
             // Main dislocation
-            ${disp_fs(tri_prefix)}
+            ${disp_fs_core(tri_prefix, "false")}
 
             summed_terms = full_out;
 
@@ -790,8 +792,9 @@ WITHIN_KERNEL Real6 AngSetupFSC_S(Real3 obs, Real3 slip, Real3 PA, Real3 PB, Rea
             image_tri1.z *= -1;
             image_tri2.z *= -1;
 
-            // Image dislocation
-            ${disp_fs("image_tri", "true")}
+            // Image dislocation  
+            ${setup_tde("image_tri", "true")}
+            ${disp_fs_core("image_tri", "true")}
 
             summed_terms = add3(summed_terms, full_out);
         }
@@ -804,10 +807,12 @@ WITHIN_KERNEL Real6 AngSetupFSC_S(Real3 obs, Real3 slip, Real3 PA, Real3 PB, Rea
     if (is_degenerate_triangle(${tri_prefix}0, ${tri_prefix}1, ${tri_prefix}2)) {
         full_out = make6(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
     } else {
+        ${setup_tde(tri_prefix, "false")}
+        
         Real6 summed_terms;
         {
             // Main dislocation
-            ${strain_fs(tri_prefix)}
+            ${strain_fs_core(tri_prefix, "false")}
 
             summed_terms = full_out;
 
@@ -830,7 +835,8 @@ WITHIN_KERNEL Real6 AngSetupFSC_S(Real3 obs, Real3 slip, Real3 PA, Real3 PB, Rea
             image_tri2.z *= -1;
 
             // Image dislocation
-            ${strain_fs("image_tri", "true")}
+            ${setup_tde("image_tri", "true")}
+            ${strain_fs_core("image_tri", "true")}
 
             summed_terms = add6(summed_terms, full_out);
         }
