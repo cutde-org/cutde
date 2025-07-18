@@ -25,7 +25,8 @@ jobs:
         create-args: python=${{ matrix.python-version }}.*
     - name: Install cutde
       run: |
-        pip install --no-use-pep517 --no-deps --disable-pip-version-check -e .
+        pip install --no-deps --disable-pip-version-check -e .
+        pip check
     - name: Lint with flake8
       run: |
         flake8 . 

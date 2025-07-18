@@ -1,12 +1,46 @@
 [build-system]
 requires = [
+  'mako',
+  'numpy',
+  'pybind11',
   'setuptools',
   'setuptools-scm',
   'wheel',
-  'pybind11',
-  'mako',
-  'numpy'
 ]
+build-backend = 'setuptools.build_meta'
+
+[project]
+name = "cutde"
+description = "130 million TDEs per second, Python + CUDA TDEs from Nikkhoo and Walter 2015"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "T. Ben Thompson", email = "t.ben.thompson@gmail.com"}
+]
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+requires-python = ">=3.8"
+dynamic = ["version"]
+dependencies = [
+  "mako",
+  "numpy",
+]
+
+[project.urls]
+Homepage = "https://github.com/tbenthompson/cutde"
+Repository = "https://github.com/tbenthompson/cutde"
+
+[tool.setuptools]
+packages = ["cutde"]
+include-package-data = true
+zip-safe = false
+
+[tool.setuptools_scm]
+# Left blank to use the default configuration of setuptools_scm
+# to dynamically infer the version number from tags.
 
 [tool.isort]
 profile = "black"

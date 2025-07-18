@@ -1,13 +1,7 @@
 import os
 
 from pybind11.setup_helpers import STD_TMPL, WIN, Pybind11Extension
-from setuptools import find_packages, setup
-
-version = open("VERSION").read()
-
-description = open("README.md").read()
-
-dir_path = os.path.dirname(os.path.realpath(__file__))
+from setuptools import setup
 
 for float_type in ["float", "double"]:
     tmpl_args = dict(float_type=float_type)
@@ -20,6 +14,7 @@ for float_type in ["float", "double"]:
     tmpl = lookup.get_template(tmpl_name)
     try:
         rendered_tmpl = tmpl.render(**tmpl_args, backend="cpp", preamble="")
+        assert isinstance(rendered_tmpl, str)
     except:  # noqa: E722
         # bare except is okay because we re-raise immediately
         import mako.exceptions
@@ -45,20 +40,6 @@ ext_modules = [
     for float_type in ["float", "double"]
 ]
 
-setup(
-    packages=find_packages(),
-    install_requires=["mako", "pybind11"],
-    ext_modules=ext_modules,
-    zip_safe=False,
-    include_package_data=True,
-    name="cutde",
-    version=version,
-    description="130 million TDEs per second, Python + CUDA TDEs from Nikkhoo and Walter 2015",  # noqa:E501
-    long_description=description,
-    long_description_content_type="text/markdown",
-    url="https://github.com/tbenthompson/cutde",
-    author="T. Ben Thompson",
-    author_email="t.ben.thompson@gmail.com",
-    license="MIT",
-    platforms=["any"],
-)
+# We need to call setup() for compilation.
+# The rest of the metadata is taken automatically from pyproject.toml.
+setup(ext_modules=ext_modules)

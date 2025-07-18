@@ -1,5 +1,4 @@
 include README.md
-include VERSION
 include LICENSE
 include cutde/*.cpp
 include cutde/*.cu
