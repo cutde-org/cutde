@@ -85,7 +85,11 @@ Use:
 stress = cutde.fullspace.strain_to_stress(strain, sm, nu)
 ```
 
-to convert from stress to strain assuming isotropic linear elasticity. `sm` is the shear modulus and `nu` is the Poisson ratio.
+to convert from stress to strain assuming isotropic linear elasticity. `sm` is the shear modulus and `nu` is the Poisson ratio. The `strain` array here is expected to have a shape `(N, 6)`. In case you have a matrix or other shaped array, this snippet might help:
+
+```
+strain_to_stress(strain_matrix.reshape((-1, 6)), mu, nu).reshape(strain_matrix.shape)
+```
 
 ## All pairs interactions matrix
 
@@ -234,6 +238,8 @@ For developing `cutde`, clone the repo and set up your conda environment based o
 conda env create
 ```
 
+Then, `pip install -e .`.
+
 Next, for developing on a GPU, please install either `pycuda` or `pyopencl` as instructed in the Installation section above.
 
 Then, you should re-generate the baseline test data derived from [the MATLAB code from Mehdi Nikhoo](https://volcanodeformation.com/software). To do this, first install `octave`. On Ubuntu, this is just:
@@ -266,7 +272,6 @@ A summary of the modules.
 * `aca.cu` - the CUDA kernels for the adaptive cross approximation implementation.
 * `backend.py` - a layer that abstracts between the CUDA, OpenCL and C++.
 * `gpu_backend.py` - some helper functions for the CUDA and OpenCL backends
-* `mako_helpers.py` - helper functions for the Mako templating.
 * `cuda.py` - the PyCUDA backend.
 * `opencl.py` - the PyOpenCL backend.
 * `cpp.py` and `cutde.cpp_backend` - combined, these two files provide a portability layer so that the CUDA code can actually be compiled as C++ and run, albeit a bit slowly, on the CPU.

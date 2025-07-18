@@ -1,4 +1,7 @@
-<%namespace module="cutde.mako_helpers" import="*"/>
+<%!
+def comp(d):
+    return ["x", "y", "z", "a", "b", "c"][d]
+%>
 <%namespace name="common" file="common.cu"/>
 
 ${common.defs(preamble, float_type)}
