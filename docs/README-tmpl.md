@@ -4,6 +4,7 @@
     <a target="_blank" href="https://anaconda.org/conda-forge/cutde" title="conda-forge"><img src="https://img.shields.io/conda/dn/conda-forge/cutde"></a>
     <a target="_blank" href="LICENSE" title="License: MIT"><img src="https://img.shields.io/badge/License-MIT-blue.svg"></a>
     <a target="_blank" href="https://github.com/tbenthompson/cutde/actions" title="Test Status"><img src="https://github.com/tbenthompson/cutde/actions/workflows/test.yml/badge.svg"></a>
+    <a target="_blank" href="https://github.com/tbenthompson/cutde/actions" title="Build Status"><img src="https://github.com/tbenthompson/cutde/actions/workflows/cibuildwheel.yml/badge.svg"></a>
     <a href="https://zenodo.org/badge/latestdoi/132957124"><img src="https://zenodo.org/badge/132957124.svg" alt="DOI"></a>
 </a>
 
