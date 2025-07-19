@@ -79,13 +79,14 @@ jobs:
         pip check
     - name: Generate example.png
       run: |
+        # Save the original file before generating the new one
+        cp docs/example.png docs/example.png.original
         python docs/example.py
     - name: Check if files are up-to-date
       run: |
-        if ! git diff --quiet docs/example.png; then
-          echo "ERROR: docs/example.png is not up-to-date!"
-          echo "Differences found in docs/example.png:"
-          git diff docs/example.png
+        # Compare the newly generated file with the original one
+        python docs/_compare_png.py docs/example.png.original docs/example.png
+        if [ $? -ne 0 ]; then
           echo ""
           echo "The newly generated docs/example.png has been uploaded as an artifact."
           echo "You can download it from the Actions tab and commit it to update the repository."
