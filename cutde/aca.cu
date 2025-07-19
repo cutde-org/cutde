@@ -6,7 +6,7 @@ def comp(d):
 
 ${common.defs(preamble, float_type)}
 
-WITHIN_KERNEL 
+WITHIN_KERNEL
 int buffer_alloc(GLOBAL_MEM int* next_ptr, int n_values) {
     int out;
     % if backend == 'cuda':
@@ -14,7 +14,7 @@ int buffer_alloc(GLOBAL_MEM int* next_ptr, int n_values) {
     % elif backend == 'opencl':
         out = atomic_add(next_ptr, n_values);
     % else:
-        #pragma omp critical 
+        #pragma omp critical
         {
             out = *next_ptr;
             *next_ptr += n_values;
@@ -25,7 +25,7 @@ int buffer_alloc(GLOBAL_MEM int* next_ptr, int n_values) {
 
 WITHIN_KERNEL
 bool in(int target, GLOBAL_MEM int* arr, int n_arr) {
-    // Could be faster by keeping arr sorted and doing binary search. 
+    // Could be faster by keeping arr sorted and doing binary search.
     // but that is probably premature optimization.
     for (int i = 0; i < n_arr; i++) {
         if (target == arr[i]) {
@@ -41,7 +41,7 @@ struct MatrixIndex {
 };
 
 % for matrix_dim in ["rows", "cols"]:
-WITHIN_KERNEL struct MatrixIndex argmax_abs_not_in_list_${matrix_dim}(GLOBAL_MEM Real* data, int n_data_rows, int n_data_cols, GLOBAL_MEM int* prev, int n_prev) 
+WITHIN_KERNEL struct MatrixIndex argmax_abs_not_in_list_${matrix_dim}(GLOBAL_MEM Real* data, int n_data_rows, int n_data_cols, GLOBAL_MEM int* prev, int n_prev)
 {
     struct MatrixIndex max_idx;
     Real max_val = -1;
@@ -97,9 +97,9 @@ WITHIN_KERNEL struct MatrixIndex argmax_abs_not_in_list_${matrix_dim}(GLOBAL_MEM
 <%def name="aca(name, evaluator, vec_dim)">
 
 % for matrix_dim in ["rows", "cols"]:
-WITHIN_KERNEL 
+WITHIN_KERNEL
 void calc_${matrix_dim}_${name}(
-    GLOBAL_MEM Real* output, 
+    GLOBAL_MEM Real* output,
     int rowcol_start, int rowcol_end,
     GLOBAL_MEM Real* obs_pts, GLOBAL_MEM Real* tris,
     int os, int oe, int ss, int se,
@@ -107,12 +107,12 @@ void calc_${matrix_dim}_${name}(
 {
     /*
     * In the calc_rows/cols function, we will calculate a batch of rows or
-    * columns corresponding to a particular triangular dislocation element. 
+    * columns corresponding to a particular triangular dislocation element.
     * In most cases, this will be three rows/cols corresponding to the x/y/z
     * components of displacement or slip. But in the case of calculating rows
     * for a strain matrix, we will be calculating six components. See the use
-    * of "vec_dim" below to specify the number of rows. 
-    * 
+    * of "vec_dim" below to specify the number of rows.
+    *
     * But, we specify the element in terms of the rowcol_start and rowcol_end.
     * This allows grabbing just a subset of the rows when that is desirable.
     */
@@ -200,7 +200,7 @@ KERNEL
 void aca_${name}(
     // out parameters here
     GLOBAL_MEM Real* buffer,
-    GLOBAL_MEM int* uv_ptrs, 
+    GLOBAL_MEM int* uv_ptrs,
     GLOBAL_MEM int* n_terms,
     // mutable workspace parameters
     GLOBAL_MEM int* next_buffer_ptr,
@@ -255,7 +255,7 @@ void aca_${name}(
     );
 
     calc_cols_${name}(
-        RJref, Jref, Jref + 3, 
+        RJref, Jref, Jref + 3,
         obs_pts, tris, os, oe, ss, se, nu,
         team_idx, team_size
     );
@@ -409,7 +409,7 @@ void aca_${name}(
                     % if verbose:
                         printf("new Iref: %i \n", Iref);
                     % endif
-                    break; 
+                    break;
                 }
             }
             calc_rows_${name}(
@@ -437,11 +437,11 @@ void aca_${name}(
                     % if verbose:
                         printf("new Jref: %i \n", Jref);
                     % endif
-                    break; 
+                    break;
                 }
             }
             calc_cols_${name}(
-                RJref, Jref, Jref + 3, 
+                RJref, Jref, Jref + 3,
                 obs_pts, tris, os, oe, ss, se, nu,
                 team_idx, team_size
             );

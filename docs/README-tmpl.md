@@ -24,9 +24,9 @@
 
 <!--STOP, MAKE SURE YOU ARE EDITING docs/README-tmpl.md and not README.md-->
 
-#  Python CPU and GPU accelerated TDEs, over 100 million TDEs per second! 
+#  Python CPU and GPU accelerated TDEs, over 100 million TDEs per second!
 
-**Note from Dec 2022**: The code here work beautifully and I plan to continue making minor bug fixes maintaining the current functionality. But I no longer will be making any improvements to this project. I would be happy to [chat or email](http://www.tbenthompson.com) to help anyone who wants to dive in. For the biggest potential improvement, see this issue: https://github.com/tbenthompson/cutde/issues/23 
+**Note from Dec 2022**: The code here work beautifully and I plan to continue making minor bug fixes maintaining the current functionality. But I no longer will be making any improvements to this project. I would be happy to [chat or email](http://www.tbenthompson.com) to help anyone who wants to dive in. For the biggest potential improvement, see this issue: https://github.com/tbenthompson/cutde/issues/23
 
 **cutde**: CUDA, OpenCL and C++ enabled fullspace and halfspace triangle dislocation elements (TDEs), benchmarked at 130 million TDEs per second. `cutde` is a translation and optimization of the [original MATLAB code from Nikhoo and Walter 2015.](https://volcanodeformation.com/software). In addition to the basic pair-wise TDE operations for displacement and strain, `cutde` also has:
 * all pairs matrix construction functions.
@@ -70,9 +70,9 @@ The parameters:
 * `obs_pts` is a `np.array` with shape `(N, 3)`
 * `src_tris` is a `np.array` with shape `(N, 3, 3)` where the second dimension corresponds to each vertex and the third dimension corresponds to the cooordinates of those vertices.
 * slips is a `np.array` with shape `(N, 3)` where `slips[:,0]` is the strike slip component, while component 1 is the dip slip and component 2 is the tensile/opening component.
-* the last parameter, nu, is the Poisson ratio. 
+* the last parameter, nu, is the Poisson ratio.
 
-IMPORTANT: N should be the same for all these arrays. There is exactly one triangle and slip value used for each observation point. 
+IMPORTANT: N should be the same for all these arrays. There is exactly one triangle and slip value used for each observation point.
 
 * The output `disp` is a `(N, 3)` array with displacement components in the x, y, z directions.
 * The output `strain` is a `(N, 6)` array representing a symmetric tensor. `strain[:,0]` is the xx component of strain, 1 is yy, 2 is zz, 3 is xy, 4 is xz, and 5 is  yz.
@@ -104,7 +104,7 @@ strain_mat = strain_matrix(obs_pts, src_tris, nu)
 
 * `obs_pts` is a `np.array` with shape `(N_OBS_PTS, 3)`
 * `src_tris` is a `np.array` with shape `(N_SRC_TRIS, 3, 3)` where the second dimension corresponds to each vertex and the third dimension corresponds to the cooordinates of those vertices.
-* the last parameter, nu, is the Poisson ratio. 
+* the last parameter, nu, is the Poisson ratio.
 * The output `disp_mat` is a `(N_OBS_PTS, 3, N_SRC_TRIS, 3)` array. The second dimension corresponds to the components of the observed displacement while the fourth dimension corresponds to the component of the source slip vector. The slip vector components are ordered the same way as in `disp(...)` and `strain(...)`.
 * The output `strain_mat` is a `(N_OBS_PTS, 6, N_SRC_TRIS, 3)` array. Like above, the dimension corresponds to the components of the observation strain with the ordering identical to `strain(...)`.
 
@@ -146,7 +146,7 @@ disp_matrices, block_idxs = disp_block(obs_pts, src_tris, [0, 5], [5, 10], [0, 2
 block1 = disp_matrices[block_idxs[0]:block_idxs[1]].reshape((5, 3, 2, 3))
 ```
 
-## Adaptive cross approximation (ACA) 
+## Adaptive cross approximation (ACA)
 
 Sometimes the matrix blocks we want to compute represent far-field interactions where the observation points are all sufficiently far away and separated as a group from the source triangles. In this situation, the matrix blocks are approximately low rank. An approximate matrix will require much less storage space and allow for more efficient matrix-vector products. Adaptive cross approximation is an algorithm for computing such a low rank representation. See [Grasedyck 2005](https://link.springer.com/content/pdf/10.1007/s00607-004-0103-1.pdf) for an accessible and general introduction to ACA. Or, see the [ACA section here](https://tbenthompson.com/book/tdes/low_rank.html) for an introduction that [builds up to using the `cutde.fullspace.disp_aca(...)` implementation](https://tbenthompson.com/book/tdes/hmatrix.html).
 
@@ -248,7 +248,7 @@ Then, you should re-generate the baseline test data derived from [the MATLAB cod
 sudo apt-get install octave
 ```
 
-And run 
+And run
 
 ```
 ./tests/setup_test_env
@@ -276,9 +276,9 @@ A summary of the modules.
 * `opencl.py` - the PyOpenCL backend.
 * `cpp.py` and `cutde.cpp_backend` - combined, these two files provide a portability layer so that the CUDA code can actually be compiled as C++ and run, albeit a bit slowly, on the CPU.
 
-The `tests/tde_profile.py` script is useful for assessing performance. 
+The `tests/tde_profile.py` script is useful for assessing performance.
 
-Some tests are marked as slow. To run these, run `pytest --runslow`. 
+Some tests are marked as slow. To run these, run `pytest --runslow`.
 
 If you several backends available and installed `cutde` will prefer CUDA, then OpenCL and finally fall back to the C++ backend. If you would prefer to specify which backend to use, you can set the environment variable `CUTDE_USE_BACKEND` to either `cuda`, `opencl` or `cpp`.
 

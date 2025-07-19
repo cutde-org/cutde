@@ -87,7 +87,7 @@ WITHIN_KERNEL void print(Real x) {
 
     WITHIN_KERNEL void print${dim}(Real${dim} x) {
         <%
-        format_str = "%f " * dim 
+        format_str = "%f " * dim
         var_str = ','.join(['x.' + comp(d) for d in range(dim)])
         %>
         printf("${format_str} \n", ${var_str});
@@ -282,7 +282,7 @@ WITHIN_KERNEL Real3 TDSetupD(Real3 obs, Real alpha, Real3 slip, Real nu, Real3 T
 }
 
 WITHIN_KERNEL Real6 AngDisStrain(Real x, Real y, Real z, Real alpha, Real bx, Real by, Real bz, Real nu) {
-    // AngDisStrain calculates the strains associated with an angular 
+    // AngDisStrain calculates the strains associated with an angular
     // dislocation in an elastic full-space.
 
     Real cosA = cos(alpha);
@@ -363,10 +363,10 @@ WITHIN_KERNEL Real6 AngDisStrain(Real x, Real y, Real z, Real alpha, Real bx, Re
 
 
 WITHIN_KERNEL Real6 TDSetupS(Real3 obs, Real alpha, Real3 slip, Real nu,
-    Real3 TriVertex, Real3 SideVec) 
+    Real3 TriVertex, Real3 SideVec)
 {
-    // TDSetupS transforms coordinates of the calculation points as well as 
-    // slip vector components from ADCS into TDCS. It then calculates the 
+    // TDSetupS transforms coordinates of the calculation points as well as
+    // slip vector components from ADCS into TDCS. It then calculates the
     // strains in ADCS and transforms them into TDCS.
 
     // Transformation matrix
@@ -393,7 +393,7 @@ WITHIN_KERNEL Real6 TDSetupS(Real3 obs, Real alpha, Real3 slip, Real nu,
     return tensor_transform3(B0, B1, B2, out_adcs);
 }
 
-WITHIN_KERNEL Real3 AngDisDispFSC(Real y1, Real y2, Real y3, Real beta, 
+WITHIN_KERNEL Real3 AngDisDispFSC(Real y1, Real y2, Real y3, Real beta,
                                   Real b1, Real b2, Real b3, Real nu, Real a) {
 
     Real sinB = sin(beta);
@@ -440,14 +440,14 @@ WITHIN_KERNEL Real3 AngDisDispFSC(Real y1, Real y2, Real y3, Real beta,
         cotB+a)-(y1*y1)/(rb*(rb+y3b))*(2*nu+a/rb)-a*(y1*y1)/(rb*rb*rb))+(y3b-a)*
         cotB/(rb+z3b)*(-cosB*sinB+a*y1*y3b/((rb*rb*rb)*cosB)+(rb*sinB-y1)/
         rb*(2*(1-nu)*cosB-(rb*cosB+y3b)/(rb+z3b)*(1+a/(rb*cosB)))));
-                    
+
     Real v2cb2 = b2/4/M_PI/(1-nu)*(2*(1-nu)*(1-2*nu)*Fib*(cotB*cotB)+(1-2*nu)*y2/
         (rb+y3b)*(-(1-2*nu-a/rb)*cotB+y1/(rb+y3b)*(nu+a/rb))-(1-2*nu)*
         y2*cotB/(rb+z3b)*(1+a/(rb*cosB))-a*y2*(y3b-a)*cotB/(rb*rb*rb)+y2*
         (y3b-a)/(rb*(rb+y3b))*((1-2*nu)*cotB-2*nu*y1/(rb+y3b)-a*y1/rb*
         (1/rb+1/(rb+y3b)))+y2*(y3b-a)*cotB/(rb*(rb+z3b))*(-2*(1-nu)*
         cosB+(rb*cosB+y3b)/(rb+z3b)*(1+a/(rb*cosB))+a*y3b/((rb*rb)*cosB)));
-                    
+
     Real v3cb2 = b2/4/M_PI/(1-nu)*(-2*(1-nu)*(1-2*nu)*cotB*(log(rb+y3b)-cosB*
         log(rb+z3b))-2*(1-nu)*y1/(rb+y3b)*(2*nu+a/rb)+2*(1-nu)*z1b/(rb+
         z3b)*(cosB+a/rb)+(y3b-a)/rb*((1-2*nu)*cotB-2*nu*y1/(rb+y3b)-a*
@@ -459,12 +459,12 @@ WITHIN_KERNEL Real3 AngDisDispFSC(Real y1, Real y2, Real y3, Real beta,
         z3b)*(cosB+a/rb))-y2*(y3b-a)/rb*(a/(rb*rb)+1/(rb+y3b))+y2*
         (y3b-a)*cosB/(rb*(rb+z3b))*((rb*cosB+y3b)/(rb+z3b)*(cosB+a/
         rb)+a*y3b/(rb*rb)));
-                    
+
     Real v2cb3 = b3/4/M_PI/(1-nu)*((1-2*nu)*(-sinB*log(rb+z3b)-y1/(rb+y3b)*(1+a/
         rb)+z1b/(rb+z3b)*(cosB+a/rb))+y1*(y3b-a)/rb*(a/(rb*rb)+1/(rb+
         y3b))-(y3b-a)/(rb+z3b)*(sinB*(cosB-a/rb)+z1b/rb*(1+a*y3b/
         (rb*rb))-1/(rb*(rb+z3b))*((y2*y2)*cosB*sinB-a*z1b/rb*(rb*cosB+y3b))));
-                    
+
     Real v3cb3 = b3/4/M_PI/(1-nu)*(2*(1-nu)*Fib+2*(1-nu)*(y2*sinB/(rb+z3b)*(cosB+
         a/rb))+y2*(y3b-a)*sinB/(rb*(rb+z3b))*(1+(rb*cosB+y3b)/(rb+
         z3b)*(cosB+a/rb)+a*y3b/(rb*rb)));
@@ -550,12 +550,12 @@ WITHIN_KERNEL Real3 AngSetupFSC(Real3 obs, Real3 slip, Real3 PA, Real3 PB, Real 
 
     Real3 vA = AngDisDispFSC(
         yA.x, yA.y, yA.z, configuration,
-        slip_adcs.x, slip_adcs.y, slip_adcs.z, 
+        slip_adcs.x, slip_adcs.y, slip_adcs.z,
         nu, -PA.z
     );
     Real3 vB = AngDisDispFSC(
         yB.x, yB.y, yB.z, configuration,
-        slip_adcs.x, slip_adcs.y, slip_adcs.z, 
+        slip_adcs.x, slip_adcs.y, slip_adcs.z,
         nu, -PB.z
     );
 
@@ -590,12 +590,12 @@ WITHIN_KERNEL Real6 AngSetupFSC_S(Real3 obs, Real3 slip, Real3 PA, Real3 PB, Rea
 
     Real6 vA = AngDisStrainFSC(
         yA.x, yA.y, yA.z, configuration,
-        slip_adcs.x, slip_adcs.y, slip_adcs.z, 
+        slip_adcs.x, slip_adcs.y, slip_adcs.z,
         nu, -PA.z
     );
     Real6 vB = AngDisStrainFSC(
         yB.x, yB.y, yB.z, configuration,
-        slip_adcs.x, slip_adcs.y, slip_adcs.z, 
+        slip_adcs.x, slip_adcs.y, slip_adcs.z,
         nu, -PB.z
     );
     Real6 v = sub6(vB, vA);
@@ -705,7 +705,7 @@ WITHIN_KERNEL Real6 AngSetupFSC_S(Real3 obs, Real3 slip, Real3 PA, Real3 PB, Rea
             }
         }
     }
-    Vstrike = normalize3(Vstrike); 
+    Vstrike = normalize3(Vstrike);
     Real3 Vdip = cross3(Vnorm, Vstrike);
 
     Real3 transformed_obs = transform3(

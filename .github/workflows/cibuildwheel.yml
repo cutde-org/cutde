@@ -1,6 +1,6 @@
 name: Build and Release Pipeline
 
-on: 
+on:
   push:
     branches:
       - master
@@ -224,11 +224,11 @@ jobs:
           # Create a flat directory with all wheels
           mkdir -p ./wheels-flat
           find ./all-wheels -name "*.whl" -exec cp {} ./wheels-flat/ \;
-          
+
           # Skip win32 wheels to avoid 64-bit vs 32-bit Python mismatch
           echo "Removing win32 wheels (64-bit Python can't test 32-bit wheels)..."
           find ./wheels-flat -name "*win32*.whl" -delete
-          
+
           # Filter wheels for Alpine (only Python specific versions)
           if [ "${{ matrix.python-filter }}" != "" ]; then
             echo "Filtering wheels for ${{ matrix.platform }} (keeping only ${{ matrix.python-filter }} wheels)..."
@@ -237,7 +237,7 @@ jobs:
             rm -rf ./wheels-flat
             mv ./wheels-filtered ./wheels-flat
           fi
-          
+
           echo "Wheels organized:"
           ls -la ./wheels-flat/
 
