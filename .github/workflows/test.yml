@@ -34,3 +34,66 @@ jobs:
       uses: codecov/codecov-action@v1
       with:
         fail_ci_if_error: false
+
+  check-readme:
+    name: Check README.md is up-to-date
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -l {0}
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+    - name: Install dependencies
+      run: |
+        pip install mako
+    - name: Generate README.md
+      run: |
+        docs/build_readme --ensure-gh-md-toc
+    - name: Check if files are up-to-date
+      run: |
+        if ! git diff --quiet README.md; then
+          echo "ERROR: README.md is not up-to-date!"
+          echo "Differences found in README.md:"
+          git diff README.md
+          exit 1
+        fi
+
+  check-example-image:
+    name: Check docs/example.png is up-to-date
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -l {0}
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        # Full history is required for setuptools-scm to determine version
+        fetch-depth: 0
+    - uses: mamba-org/setup-micromamba@v1
+      with:
+        environment-file: environment.yml
+    - name: Install cutde
+      run: |
+        pip install --no-deps --disable-pip-version-check -e .
+        pip check
+    - name: Generate example.png
+      run: |
+        python docs/example.py
+    - name: Check if files are up-to-date
+      run: |
+        if ! git diff --quiet docs/example.png; then
+          echo "ERROR: docs/example.png is not up-to-date!"
+          echo "Differences found in docs/example.png:"
+          git diff docs/example.png
+          echo ""
+          echo "The newly generated docs/example.png has been uploaded as an artifact."
+          echo "You can download it from the Actions tab and commit it to update the repository."
+          exit 1
+        fi
+    - name: Upload generated example.png as artifact
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: generated-example-png
+        path: docs/example.png
