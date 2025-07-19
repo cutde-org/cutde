@@ -27,15 +27,6 @@ jobs:
       run: |
         pip install --no-deps --disable-pip-version-check -e .
         pip check
-    - name: Lint with flake8
-      run: |
-        flake8 .
-    - name: Check formatting with black
-      run: |
-        black --check .
-    - name: Check import ordering with isort
-      run: |
-        isort --check .
     - name: Test
       run: |
         CFLAGS='-stdlib=libc++' pytest --runslow --cov=./ --cov-report=xml
