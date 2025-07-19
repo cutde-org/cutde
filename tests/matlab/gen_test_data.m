@@ -121,4 +121,3 @@ tic;
 toc;
 format long;
 save(filename, 'UEf', 'UNf', 'UVf', 'Stress', 'Strain', '-v6');
-

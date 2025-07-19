@@ -8,7 +8,7 @@ ${common.defs(preamble, float_type)}
 
 <%def name="tde_free(name, evaluator, vec_dim)">
 KERNEL
-void free_${name}(GLOBAL_MEM Real* results, 
+void free_${name}(GLOBAL_MEM Real* results,
     int n_obs, int n_src, int src_start, int src_end,
     GLOBAL_MEM Real* obs_pts, GLOBAL_MEM Real* tris,
     GLOBAL_MEM Real* slips,

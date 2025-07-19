@@ -8,7 +8,7 @@ ${common.defs(preamble, float_type)}
 
 <%def name="tde_blocks(name, evaluator, vec_dim)">
 KERNEL
-void blocks_${name}(GLOBAL_MEM Real* results, 
+void blocks_${name}(GLOBAL_MEM Real* results,
     GLOBAL_MEM Real* obs_pts, GLOBAL_MEM Real* tris,
     GLOBAL_MEM int* obs_start, GLOBAL_MEM int* obs_end,
     GLOBAL_MEM int* src_start, GLOBAL_MEM int* src_end,

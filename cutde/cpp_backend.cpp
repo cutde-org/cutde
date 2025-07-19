@@ -8,7 +8,7 @@ def comp(d):
 #include <cstdio>
 #include <algorithm>
 
-#define WITHIN_KERNEL 
+#define WITHIN_KERNEL
 #define KERNEL
 #define GLOBAL_MEM
 #define LOCAL_MEM
@@ -87,9 +87,9 @@ struct pyarg_from_cpparg<T*> {
 template <typename R, typename ...Args>
 decltype(auto) wrapper(R(*fn)(Args...))
 {
-    return [=](typename pyarg_from_cpparg<Args>::PyArgType... args, 
+    return [=](typename pyarg_from_cpparg<Args>::PyArgType... args,
              std::tuple<int,int,int> grid,
-             std::tuple<int,int,int> block) 
+             std::tuple<int,int,int> block)
     {
         gridDim = {std::get<0>(grid), std::get<1>(grid), std::get<2>(grid)};
         blockIdx = {0,0,0};

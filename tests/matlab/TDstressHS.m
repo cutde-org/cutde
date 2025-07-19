@@ -1,21 +1,21 @@
 function [Stress,Strain]=TDstressHS(X,Y,Z,P1,P2,P3,Ss,Ds,Ts,mu,lambda)
-% TDstressHS 
-% calculates stresses and strains associated with a triangular dislocation 
+% TDstressHS
+% calculates stresses and strains associated with a triangular dislocation
 % in an elastic half-space.
 %
 % TD: Triangular Dislocation
 % EFCS: Earth-Fixed Coordinate System
 % TDCS: Triangular Dislocation Coordinate System
 % ADCS: Angular Dislocation Coordinate System
-% 
+%
 % INPUTS
-% X, Y and Z: 
-% Coordinates of calculation points in EFCS (East, North, Up). X, Y and Z 
+% X, Y and Z:
+% Coordinates of calculation points in EFCS (East, North, Up). X, Y and Z
 % must have the same size.
 %
 % P1,P2 and P3:
 % Coordinates of TD vertices in EFCS.
-% 
+%
 % Ss, Ds and Ts:
 % TD slip vector components (Strike-slip, Dip-slip, Tensile-slip).
 %
@@ -24,19 +24,19 @@ function [Stress,Strain]=TDstressHS(X,Y,Z,P1,P2,P3,Ss,Ds,Ts,mu,lambda)
 %
 % OUTPUTS
 % Stress:
-% Calculated stress tensor components in EFCS. The six columns of Stress 
-% are Sxx, Syy, Szz, Sxy, Sxz and Syz, respectively. The stress components 
+% Calculated stress tensor components in EFCS. The six columns of Stress
+% are Sxx, Syy, Szz, Sxy, Sxz and Syz, respectively. The stress components
 % have the same unit as Lame constants.
 %
 % Strain:
-% Calculated strain tensor components in EFCS. The six columns of Strain 
-% are Exx, Eyy, Ezz, Exy, Exz and Eyz, respectively. The strain components 
+% Calculated strain tensor components in EFCS. The six columns of Strain
+% are Exx, Eyy, Ezz, Exy, Exz and Eyz, respectively. The strain components
 % are dimensionless.
-% 
-% 
-% Example: Calculate and plot the first component of stress tensor on a  
+%
+%
+% Example: Calculate and plot the first component of stress tensor on a
 % regular grid.
-% 
+%
 % [X,Y,Z] = meshgrid(-3:.02:3,-3:.02:3,-5);
 % [Stress,Strain] = TDstressHS(X,Y,Z,[-1 0 0],[1 -1 -1],[0 1.5 -2],...
 % -1,2,3,.33e11,.33e11);
@@ -46,29 +46,29 @@ function [Stress,Strain]=TDstressHS(X,Y,Z,P1,P2,P3,Ss,Ds,Ts,mu,lambda)
 % axis tight
 % set(gcf,'renderer','painters')
 
-% Reference journal article: 
+% Reference journal article:
 % Nikkhoo, M., Walter, T. R. (2015): Triangular dislocation: an analytical,
-% artefact-free solution. - Geophysical Journal International, 201, 
+% artefact-free solution. - Geophysical Journal International, 201,
 % 1117-1139. doi: 10.1093/gji/ggv035
 
 % Copyright (c) 2014 Mehdi Nikkhoo
-% 
-% Permission is hereby granted, free of charge, to any person obtaining a 
-% copy of this software and associated documentation files 
-% (the "Software"), to deal in the Software without restriction, including 
-% without limitation the rights to use, copy, modify, merge, publish, 
+%
+% Permission is hereby granted, free of charge, to any person obtaining a
+% copy of this software and associated documentation files
+% (the "Software"), to deal in the Software without restriction, including
+% without limitation the rights to use, copy, modify, merge, publish,
 % distribute, sublicense, and/or sell copies of the Software, and to permit
-% persons to whom the Software is furnished to do so, subject to the 
+% persons to whom the Software is furnished to do so, subject to the
 % following conditions:
-% 
-% The above copyright notice and this permission notice shall be included 
+%
+% The above copyright notice and this permission notice shall be included
 % in all copies or substantial portions of the Software.
-% 
-% THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS 
-% OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF 
+%
+% THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+% OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
 % MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-% NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, 
-% DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR 
+% NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+% DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 % OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 % USE OR OTHER DEALINGS IN THE SOFTWARE.
 
@@ -76,17 +76,17 @@ function [Stress,Strain]=TDstressHS(X,Y,Z,P1,P2,P3,Ss,Ds,Ts,mu,lambda)
 
 % Update report No. 1:
 % 1) Bug description: The equation for Poisson's ratio (Line 130 and 399 in
-% the previous version) was valid only for a Poisson solid with 
-% mu = lambda. 
-% Bug fixed: The issue has been fixed and the correct equation has been 
+% the previous version) was valid only for a Poisson solid with
+% mu = lambda.
+% Bug fixed: The issue has been fixed and the correct equation has been
 % replaced (Line 147 and 416 in this version).
-%   
+%
 % 2) The "Configuration I" (Line 446-457 in the first version) was correct,
 % but had not been simplified like "Configuration II" in the same
-% sub-function. The simplified form (Lines 463-468 in this version) has 
+% sub-function. The simplified form (Lines 463-468 in this version) has
 % been replaced.
-% 
-% 3) The three vertices of a TD must not be located on the free surface 
+%
+% 3) The three vertices of a TD must not be located on the free surface
 % simultaneously. The strains and stresses corresponding to such a case are
 % set to zero (see Lines 112-115 here). Accordingly, the "if" expression at
 % Lines 114-119 in the previous version was removed.
@@ -94,16 +94,16 @@ function [Stress,Strain]=TDstressHS(X,Y,Z,P1,P2,P3,Ss,Ds,Ts,mu,lambda)
 % Mehdi Nikkhoo
 % created: 2013.1.28
 % Last modified: 2016.10.18
-% 
+%
 % Section 2.1, Physics of Earthquakes and Volcanoes
 % Department 2, Geophysics
 % Helmholtz Centre Potsdam
 % German Research Centre for Geosciences (GFZ)
-% 
-% email: 
-% mehdi.nikkhoo@gfz-potsdam.de 
+%
+% email:
+% mehdi.nikkhoo@gfz-potsdam.de
 % mehdi.nikkhoo@gmail.com
-% 
+%
 % website:
 % http://www.volcanodeformation.com
 
@@ -140,8 +140,8 @@ Stress = StsMS+StsIS+StsFSC;
 Strain = StrMS+StrIS+StrFSC;
 
 function [Stress,Strain]=TDstressFS(X,Y,Z,P1,P2,P3,Ss,Ds,Ts,mu,lambda)
-% TDstressFS 
-% Calculates stresses and strains associated with a triangular dislocation 
+% TDstressFS
+% Calculates stresses and strains associated with a triangular dislocation
 % in an elastic full-space.
 
 nu = lambda/(lambda+mu)/2; % Poisson's ratio
@@ -150,10 +150,10 @@ bx = Ts; % Tensile-slip
 by = Ss; % Strike-slip
 bz = Ds; % Dip-slip
 
-% Calculate unit strike, dip and normal to TD vectors: For a horizontal TD 
-% as an exception, if the normal vector points upward, the strike and dip 
+% Calculate unit strike, dip and normal to TD vectors: For a horizontal TD
+% as an exception, if the normal vector points upward, the strike and dip
 % vectors point Northward and Westward, whereas if the normal vector points
-% downward, the strike and dip vectors point Southward and Westward, 
+% downward, the strike and dip vectors point Southward and Westward,
 % respectively.
 Vnorm = cross(P2-P1,P3-P1);
 Vnorm = Vnorm/norm(Vnorm);
@@ -228,7 +228,7 @@ if nnz(casenLog)~=0
         bx,by,bz,nu,p2,-e12);
     % Calculate third angular dislocation contribution
     [Exx3Tn,Eyy3Tn,Ezz3Tn,Exy3Tn,Exz3Tn,Eyz3Tn] = TDSetupS(xn,yn,zn,C,...
-        bx,by,bz,nu,p3,-e23);    
+        bx,by,bz,nu,p3,-e23);
 end
 
 % Calculate the strain tensor components in TDCS
@@ -274,18 +274,18 @@ Stress = [Sxx,Syy,Szz,Sxy,Sxz,Syz];
 
 function [Stress,Strain]=TDstress_HarFunc(X,Y,Z,P1,P2,P3,Ss,Ds,Ts,mu,lambda)
 % TDstress_HarFunc calculates the harmonic function contribution to the
-% strains and stresses associated with a triangular dislocation in a 
-% half-space. The function cancels the surface normal tractions induced by 
+% strains and stresses associated with a triangular dislocation in a
+% half-space. The function cancels the surface normal tractions induced by
 % the main and image dislocations.
 
 bx = Ts; % Tensile-slip
 by = Ss; % Strike-slip
 bz = Ds; % Dip-slip
 
-% Calculate unit strike, dip and normal to TD vectors: For a horizontal TD 
-% as an exception, if the normal vector points upward, the strike and dip 
+% Calculate unit strike, dip and normal to TD vectors: For a horizontal TD
+% as an exception, if the normal vector points upward, the strike and dip
 % vectors point Northward and Westward, whereas if the normal vector points
-% downward, the strike and dip vectors point Southward and Westward, 
+% downward, the strike and dip vectors point Southward and Westward,
 % respectively.
 Vnorm = cross(P2-P1,P3-P1);
 Vnorm = Vnorm/norm(Vnorm);
@@ -304,7 +304,7 @@ Vdip = cross(Vnorm,Vstrike);
 A = [Vnorm Vstrike Vdip];
 [bX,bY,bZ] = CoordTrans(bx,by,bz,A);
 
-% Calculate contribution of angular dislocation pair on each TD side 
+% Calculate contribution of angular dislocation pair on each TD side
 [Stress1,Strain1] = AngSetupFSC_S(X,Y,Z,bX,bY,bZ,P1,P2,mu,lambda); % P1P2
 [Stress2,Strain2] = AngSetupFSC_S(X,Y,Z,bX,bY,bZ,P2,P3,mu,lambda); % P2P3
 [Stress3,Strain3] = AngSetupFSC_S(X,Y,Z,bX,bY,bZ,P3,P1,mu,lambda); % P3P1
@@ -316,9 +316,9 @@ Strain = Strain1+Strain2+Strain3;
 function [Txx2,Tyy2,Tzz2,Txy2,Txz2,Tyz2]=TensTrans(Txx1,Tyy1,Tzz1,Txy1,...
     Txz1,Tyz1,A)
 % TensTrans Transforms the coordinates of tensors,from x1y1z1 coordinate
-% system to x2y2z2 coordinate system. "A" is the transformation matrix, 
-% whose columns e1,e2 and e3 are the unit base vectors of the x1y1z1. The 
-% coordinates of e1,e2 and e3 in A must be given in x2y2z2. The transpose 
+% system to x2y2z2 coordinate system. "A" is the transformation matrix,
+% whose columns e1,e2 and e3 are the unit base vectors of the x1y1z1. The
+% coordinates of e1,e2 and e3 in A must be given in x2y2z2. The transpose
 % of A (i.e., A') does the transformation from x2y2z2 into x1y1z1.
 Txx2 = A(1)^2*Txx1+2*A(1)*A(4)*Txy1+2*A(1)*A(7)*Txz1+2*A(4)*A(7)*Tyz1+...
     A(4)^2*Tyy1+A(7)^2*Tzz1;
@@ -339,9 +339,9 @@ Tyz2 = A(2)*A(3)*Txx1+(A(3)*A(5)+A(2)*A(6))*Txy1+(A(3)*A(8)+...
 function [X1,X2,X3]=CoordTrans(x1,x2,x3,A)
 % CoordTrans transforms the coordinates of the vectors, from
 % x1x2x3 coordinate system to X1X2X3 coordinate system. "A" is the
-% transformation matrix, whose columns e1,e2 and e3 are the unit base 
-% vectors of the x1x2x3. The coordinates of e1,e2 and e3 in A must be given 
-% in X1X2X3. The transpose of A (i.e., A') will transform the coordinates 
+% transformation matrix, whose columns e1,e2 and e3 are the unit base
+% vectors of the x1x2x3. The coordinates of e1,e2 and e3 in A must be given
+% in X1X2X3. The transpose of A (i.e., A') will transform the coordinates
 % from X1X2X3 into x1x2x3.
 
 x1 = x1(:);
@@ -353,15 +353,15 @@ X2 = r(2,:)';
 X3 = r(3,:)';
 
 function [trimode]=trimodefinder(x,y,z,p1,p2,p3)
-% trimodefinder calculates the normalized barycentric coordinates of 
+% trimodefinder calculates the normalized barycentric coordinates of
 % the points with respect to the TD vertices and specifies the appropriate
-% artefact-free configuration of the angular dislocations for the 
+% artefact-free configuration of the angular dislocations for the
 % calculations. The input matrices x, y and z share the same size and
 % correspond to the y, z and x coordinates in the TDCS, respectively. p1,
 % p2 and p3 are two-component matrices representing the y and z coordinates
 % of the TD vertices in the TDCS, respectively.
-% The components of the output (trimode) corresponding to each calculation 
-% points, are 1 for the first configuration, -1 for the second 
+% The components of the output (trimode) corresponding to each calculation
+% points, are 1 for the first configuration, -1 for the second
 % configuration and 0 for the calculation point that lie on the TD sides.
 
 x = x(:);
@@ -385,8 +385,8 @@ trimode(trimode==0 & z~=0) = 1;
 
 function [exx,eyy,ezz,exy,exz,eyz]=TDSetupS(x,y,z,alpha,bx,by,bz,nu,...
     TriVertex,SideVec)
-% TDSetupS transforms coordinates of the calculation points as well as 
-% slip vector components from ADCS into TDCS. It then calculates the 
+% TDSetupS transforms coordinates of the calculation points as well as
+% slip vector components from ADCS into TDCS. It then calculates the
 % strains in ADCS and transforms them into TDCS.
 
 % Transformation matrix
@@ -410,7 +410,7 @@ B = [[1 0 0];[zeros(2,1),A']]; % 3x3 Transformation matrix
 [exx,eyy,ezz,exy,exz,eyz] = TensTrans(exx,eyy,ezz,exy,exz,eyz,B);
 
 function [Stress,Strain]=AngSetupFSC_S(X,Y,Z,bX,bY,bZ,PA,PB,mu,lambda)
-% AngSetupFSC_S calculates the Free Surface Correction to strains and 
+% AngSetupFSC_S calculates the Free Surface Correction to strains and
 % stresses associated with angular dislocation pair on each TD side.
 
 nu = lambda/(lambda+mu)/2; % Poisson's ratio
@@ -429,7 +429,7 @@ else
     ey3 = -eZ;
     ey2 = cross(ey3,ey1);
     A = [ey1,ey2,ey3]; % Transformation matrix
-    
+
     % Transform coordinates from EFCS to the first ADCS
     [y1A,y2A,y3A] = CoordTrans(X-PA(1),Y-PA(2),Z-PA(3),A);
     % Transform coordinates from EFCS to the second ADCS
@@ -437,14 +437,14 @@ else
     y1B = y1A-y1AB;
     y2B = y2A-y2AB;
     y3B = y3A-y3AB;
-    
+
     % Transform slip vector components from EFCS to ADCS
     [b1,b2,b3] = CoordTrans(bX,bY,bZ,A);
-    
+
     % Determine the best artefact-free configuration for the calculation
     % points near the free surface
     I = (beta*y1A)>=0;
-    
+
     % For singularities at surface
     v11A = zeros(length(X),1);
     v22A = zeros(length(X),1);
@@ -452,28 +452,28 @@ else
     v12A = zeros(length(X),1);
     v13A = zeros(length(X),1);
     v23A = zeros(length(X),1);
-    
+
     v11B = zeros(length(X),1);
     v22B = zeros(length(X),1);
     v33B = zeros(length(X),1);
     v12B = zeros(length(X),1);
     v13B = zeros(length(X),1);
     v23B = zeros(length(X),1);
-    
+
     % Configuration I
     [v11A(I),v22A(I),v33A(I),v12A(I),v13A(I),v23A(I)] = ...
         AngDisStrainFSC(y1A(I),y2A(I),y3A(I),-pi+beta,b1,b2,b3,nu,-PA(3));
-    
+
     [v11B(I),v22B(I),v33B(I),v12B(I),v13B(I),v23B(I)] = ...
         AngDisStrainFSC(y1B(I),y2B(I),y3B(I),-pi+beta,b1,b2,b3,nu,-PB(3));
-    
+
     % Configuration II
     [v11A(~I),v22A(~I),v33A(~I),v12A(~I),v13A(~I),v23A(~I)] = ...
         AngDisStrainFSC(y1A(~I),y2A(~I),y3A(~I),beta,b1,b2,b3,nu,-PA(3));
-    
+
     [v11B(~I),v22B(~I),v33B(~I),v12B(~I),v13B(~I),v23B(~I)] = ...
         AngDisStrainFSC(y1B(~I),y2B(~I),y3B(~I),beta,b1,b2,b3,nu,-PB(3));
-    
+
     % Calculate total Free Surface Correction to strains in ADCS
     v11 = v11B-v11A;
     v22 = v22B-v22A;
@@ -481,10 +481,10 @@ else
     v12 = v12B-v12A;
     v13 = v13B-v13A;
     v23 = v23B-v23A;
-    
+
     % Transform total Free Surface Correction to strains from ADCS to EFCS
     [Exx,Eyy,Ezz,Exy,Exz,Eyz] = TensTrans(v11,v22,v33,v12,v13,v23,A');
-    
+
     % Calculate total Free Surface Correction to stresses in EFCS
     Sxx = 2*mu*Exx+lambda*(Exx+Eyy+Ezz);
     Syy = 2*mu*Eyy+lambda*(Exx+Eyy+Ezz);
@@ -492,13 +492,13 @@ else
     Sxy = 2*mu*Exy;
     Sxz = 2*mu*Exz;
     Syz = 2*mu*Eyz;
-    
+
     Strain = [Exx,Eyy,Ezz,Exy,Exz,Eyz];
     Stress = [Sxx,Syy,Szz,Sxy,Sxz,Syz];
 end
 
 function [Exx,Eyy,Ezz,Exy,Exz,Eyz]=AngDisStrain(x,y,z,alpha,bx,by,bz,nu)
-% AngDisStrain calculates the strains associated with an angular 
+% AngDisStrain calculates the strains associated with an angular
 % dislocation in an elastic full-space.
 
 sinA = sin(alpha);
@@ -575,7 +575,7 @@ Eyz = by.*(rFi_rz)./2+bz.*(rFi_ry)./2+...
 
 function [v11,v22,v33,v12,v13,v23] = AngDisStrainFSC(y1,y2,y3,beta,...
     b1,b2,b3,nu,a)
-% AngDisStrainFSC calculates the harmonic function contribution to the 
+% AngDisStrainFSC calculates the harmonic function contribution to the
 % strains associated with an angular dislocation in an elastic half-space.
 
 sinB = sin(beta);
@@ -948,4 +948,3 @@ v23 = b1/2*(1/4*(N1.*(((2-2*nu)*cotB^2-nu).*(y3b./rb+1)./W6-((2-2*nu)*...
     W7.*W2+a.*y3b./rb2)-y2.^2.*W8*sinB./rb2./W7.^2.*(1+W1./W7.*W2+a.*...
     y3b./rb2)+y2.*W8*sinB./rb./W7.*(1./rb*cosB.*y2./W7.*W2-W1./W7.^2.*...
     W2./rb.*y2-W1./W7*a./rb.^3.*y2-2*a.*y3b./rb2.^2.*y2))/pi/(1-nu));
-

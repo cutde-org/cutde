@@ -25,4 +25,3 @@ dependencies:
   - llvm-openmp  # [osx]
   - pybind11
   - mako
-

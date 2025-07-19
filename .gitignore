@@ -14,3 +14,4 @@ dist
 *.so
 .DS_Store
 .vim
+gh-md-toc

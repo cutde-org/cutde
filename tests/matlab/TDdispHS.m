@@ -1,21 +1,21 @@
 function [ue,un,uv]=TDdispHS(X,Y,Z,P1,P2,P3,Ss,Ds,Ts,nu)
-% TDdispHS 
-% calculates displacements associated with a triangular dislocation in an 
+% TDdispHS
+% calculates displacements associated with a triangular dislocation in an
 % elastic half-space.
 %
 % TD: Triangular Dislocation
 % EFCS: Earth-Fixed Coordinate System
 % TDCS: Triangular Dislocation Coordinate System
 % ADCS: Angular Dislocation Coordinate System
-% 
+%
 % INPUTS
-% X, Y and Z: 
-% Coordinates of calculation points in EFCS (East, North, Up). X, Y and Z 
-% must have the same size. 
+% X, Y and Z:
+% Coordinates of calculation points in EFCS (East, North, Up). X, Y and Z
+% must have the same size.
 %
 % P1,P2 and P3:
-% Coordinates of TD vertices in EFCS. 
-% 
+% Coordinates of TD vertices in EFCS.
+%
 % Ss, Ds and Ts:
 % TD slip vector components (Strike-slip, Dip-slip, Tensile-slip).
 %
@@ -26,11 +26,11 @@ function [ue,un,uv]=TDdispHS(X,Y,Z,P1,P2,P3,Ss,Ds,Ts,nu)
 % ue, un and uv:
 % Calculated displacement vector components in EFCS. ue, un and uv have
 % the same unit as Ss, Ds and Ts in the inputs.
-% 
-% 
-% Example: Calculate and plot the first component of displacement vector 
+%
+%
+% Example: Calculate and plot the first component of displacement vector
 % on a regular grid.
-% 
+%
 % [X,Y,Z] = meshgrid(-3:.02:3,-3:.02:3,-5);
 % [ue,un,uv] = TDdispHS(X,Y,Z,[-1 0 0],[1 -1 -1],[0 1.5 -2],-1,2,3,.25);
 % h = surf(X,Y,reshape(ue,size(X)),'edgecolor','none');
@@ -39,29 +39,29 @@ function [ue,un,uv]=TDdispHS(X,Y,Z,P1,P2,P3,Ss,Ds,Ts,nu)
 % axis tight
 % set(gcf,'renderer','painters')
 
-% Reference journal article: 
+% Reference journal article:
 % Nikkhoo, M., Walter, T. R. (2015): Triangular dislocation: an analytical,
-% artefact-free solution. - Geophysical Journal International, 201, 
+% artefact-free solution. - Geophysical Journal International, 201,
 % 1117-1139. doi: 10.1093/gji/ggv035
 
 % Copyright (c) 2014 Mehdi Nikkhoo
-% 
-% Permission is hereby granted, free of charge, to any person obtaining a 
-% copy of this software and associated documentation files 
-% (the "Software"), to deal in the Software without restriction, including 
-% without limitation the rights to use, copy, modify, merge, publish, 
+%
+% Permission is hereby granted, free of charge, to any person obtaining a
+% copy of this software and associated documentation files
+% (the "Software"), to deal in the Software without restriction, including
+% without limitation the rights to use, copy, modify, merge, publish,
 % distribute, sublicense, and/or sell copies of the Software, and to permit
-% persons to whom the Software is furnished to do so, subject to the 
+% persons to whom the Software is furnished to do so, subject to the
 % following conditions:
-% 
-% The above copyright notice and this permission notice shall be included 
+%
+% The above copyright notice and this permission notice shall be included
 % in all copies or substantial portions of the Software.
-% 
-% THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS 
-% OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF 
+%
+% THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+% OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
 % MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-% NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, 
-% DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR 
+% NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+% DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 % OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 % USE OR OTHER DEALINGS IN THE SOFTWARE.
 
@@ -69,11 +69,11 @@ function [ue,un,uv]=TDdispHS(X,Y,Z,P1,P2,P3,Ss,Ds,Ts,nu)
 
 % Update report No. 1:
 % 1) The solid angle calculation was modified to account for the "sign bit"
-% of the absolute zero values in the numerator of the "atan2" function. 
-% These zeros correspond to the points that are exactly on the TD plane 
+% of the absolute zero values in the numerator of the "atan2" function.
+% These zeros correspond to the points that are exactly on the TD plane
 % (see Lines 240-245).
-% 
-% 2) The three vertices of a TD must not be located on the free surface 
+%
+% 2) The three vertices of a TD must not be located on the free surface
 % simultaneously. The displacements corresponding to such a case are set to
 % zero (see Lines 99-103 here). Accordingly, the two "if" expressions at
 % Lines 107-109 and 116-120 in the previous version were removed.
@@ -81,16 +81,16 @@ function [ue,un,uv]=TDdispHS(X,Y,Z,P1,P2,P3,Ss,Ds,Ts,nu)
 % Mehdi Nikkhoo
 % created: 2013.1.24
 % Last modified: 2016.10.18
-% 
+%
 % Section 2.1, Physics of Earthquakes and Volcanoes
 % Department 2, Geophysics
 % Helmholtz Centre Potsdam
 % German Research Centre for Geosciences (GFZ)
-% 
-% email: 
-% mehdi.nikkhoo@gfz-potsdam.de 
+%
+% email:
+% mehdi.nikkhoo@gfz-potsdam.de
 % mehdi.nikkhoo@gmail.com
-% 
+%
 % website:
 % http://www.volcanodeformation.com
 
@@ -130,7 +130,7 @@ uv = uvMS+uvIS+uvFSC;
 
 
 function [ue,un,uv]=TDdispFS(X,Y,Z,P1,P2,P3,Ss,Ds,Ts,nu)
-% TDdispFS 
+% TDdispFS
 % Calculates displacements associated with a triangular dislocation in an
 % elastic full-space.
 
@@ -138,10 +138,10 @@ bx = Ts; % Tensile-slip
 by = Ss; % Strike-slip
 bz = Ds; % Dip-slip
 
-% Calculate unit strike, dip and normal to TD vectors: For a horizontal TD 
-% as an exception, if the normal vector points upward, the strike and dip 
+% Calculate unit strike, dip and normal to TD vectors: For a horizontal TD
+% as an exception, if the normal vector points upward, the strike and dip
 % vectors point Northward and Westward, whereas if the normal vector points
-% downward, the strike and dip vectors point Southward and Westward, 
+% downward, the strike and dip vectors point Southward and Westward,
 % respectively.
 Vnorm = cross(P2-P1,P3-P1);
 Vnorm = Vnorm/norm(Vnorm);
@@ -262,10 +262,10 @@ bx = Ts; % Tensile-slip
 by = Ss; % Strike-slip
 bz = Ds; % Dip-slip
 
-% Calculate unit strike, dip and normal to TD vectors: For a horizontal TD 
-% as an exception, if the normal vector points upward, the strike and dip 
+% Calculate unit strike, dip and normal to TD vectors: For a horizontal TD
+% as an exception, if the normal vector points upward, the strike and dip
 % vectors point Northward and Westward, whereas if the normal vector points
-% downward, the strike and dip vectors point Southward and Westward, 
+% downward, the strike and dip vectors point Southward and Westward,
 % respectively.
 Vnorm = cross(P2-P1,P3-P1);
 Vnorm = Vnorm/norm(Vnorm);
@@ -284,7 +284,7 @@ Vdip = cross(Vnorm,Vstrike);
 A = [Vnorm Vstrike Vdip];
 [bX,bY,bZ] = CoordTrans(bx,by,bz,A);
 
-% Calculate contribution of angular dislocation pair on each TD side 
+% Calculate contribution of angular dislocation pair on each TD side
 [u1,v1,w1] = AngSetupFSC(X,Y,Z,bX,bY,bZ,P1,P2,nu); % Side P1P2
 [u2,v2,w2] = AngSetupFSC(X,Y,Z,bX,bY,bZ,P2,P3,nu); % Side P2P3
 [u3,v3,w3] = AngSetupFSC(X,Y,Z,bX,bY,bZ,P3,P1,nu); % Side P3P1
@@ -297,9 +297,9 @@ uv = w1+w2+w3;
 function [X1,X2,X3]=CoordTrans(x1,x2,x3,A)
 % CoordTrans transforms the coordinates of the vectors, from
 % x1x2x3 coordinate system to X1X2X3 coordinate system. "A" is the
-% transformation matrix, whose columns e1,e2 and e3 are the unit base 
-% vectors of the x1x2x3. The coordinates of e1,e2 and e3 in A must be given 
-% in X1X2X3. The transpose of A (i.e., A') will transform the coordinates 
+% transformation matrix, whose columns e1,e2 and e3 are the unit base
+% vectors of the x1x2x3. The coordinates of e1,e2 and e3 in A must be given
+% in X1X2X3. The transpose of A (i.e., A') will transform the coordinates
 % from X1X2X3 into x1x2x3.
 
 x1 = x1(:);
@@ -311,15 +311,15 @@ X2 = r(2,:)';
 X3 = r(3,:)';
 
 function [trimode]=trimodefinder(x,y,z,p1,p2,p3)
-% trimodefinder calculates the normalized barycentric coordinates of 
+% trimodefinder calculates the normalized barycentric coordinates of
 % the points with respect to the TD vertices and specifies the appropriate
-% artefact-free configuration of the angular dislocations for the 
+% artefact-free configuration of the angular dislocations for the
 % calculations. The input matrices x, y and z share the same size and
 % correspond to the y, z and x coordinates in the TDCS, respectively. p1,
 % p2 and p3 are two-component matrices representing the y and z coordinates
 % of the TD vertices in the TDCS, respectively.
-% The components of the output (trimode) corresponding to each calculation 
-% points, are 1 for the first configuration, -1 for the second 
+% The components of the output (trimode) corresponding to each calculation
+% points, are 1 for the first configuration, -1 for the second
 % configuration and 0 for the calculation point that lie on the TD sides.
 
 x = x(:);
@@ -342,8 +342,8 @@ trimode(a>=0 & b>=0 & c==0) = 0;
 trimode(trimode==0 & z~=0) = 1;
 
 function [u,v,w]=TDSetupD(x,y,z,alpha,bx,by,bz,nu,TriVertex,SideVec)
-% TDSetupD transforms coordinates of the calculation points as well as 
-% slip vector components from ADCS into TDCS. It then calculates the 
+% TDSetupD transforms coordinates of the calculation points as well as
+% slip vector components from ADCS into TDCS. It then calculates the
 % displacements in ADCS and transforms them into TDCS.
 
 % Transformation matrix
@@ -368,7 +368,7 @@ v = r3(1,:)';
 w = r3(2,:)';
 
 function [ue,un,uv]=AngSetupFSC(X,Y,Z,bX,bY,bZ,PA,PB,nu)
-% AngSetupFSC calculates the Free Surface Correction to displacements 
+% AngSetupFSC calculates the Free Surface Correction to displacements
 % associated with angular dislocation pair on each TD side.
 
 % Calculate TD side vector and the angle of the angular dislocation pair
@@ -386,7 +386,7 @@ else
     ey3 = -eZ;
     ey2 = cross(ey3,ey1);
     A = [ey1,ey2,ey3]; % Transformation matrix
-    
+
     % Transform coordinates from EFCS to the first ADCS
     [y1A,y2A,y3A] = CoordTrans(X-PA(1),Y-PA(2),Z-PA(3),A);
     % Transform coordinates from EFCS to the second ADCS
@@ -394,38 +394,38 @@ else
     y1B = y1A-y1AB;
     y2B = y2A-y2AB;
     y3B = y3A-y3AB;
-    
+
     % Transform slip vector components from EFCS to ADCS
     [b1,b2,b3] = CoordTrans(bX,bY,bZ,A);
-    
+
     % Determine the best artefact-free configuration for the calculation
     % points near the free surface
     I = (beta*y1A)>=0;
-    
+
     % Configuration I
     [v1A(I),v2A(I),v3A(I)] = AngDisDispFSC(y1A(I),y2A(I),y3A(I),...
         -pi+beta,b1,b2,b3,nu,-PA(3));
     [v1B(I),v2B(I),v3B(I)] = AngDisDispFSC(y1B(I),y2B(I),y3B(I),...
         -pi+beta,b1,b2,b3,nu,-PB(3));
-    
+
     % Configuration II
     [v1A(~I),v2A(~I),v3A(~I)] = AngDisDispFSC(y1A(~I),y2A(~I),y3A(~I),...
         beta,b1,b2,b3,nu,-PA(3));
     [v1B(~I),v2B(~I),v3B(~I)] = AngDisDispFSC(y1B(~I),y2B(~I),y3B(~I),...
         beta,b1,b2,b3,nu,-PB(3));
-    
+
     % Calculate total Free Surface Correction to displacements in ADCS
     v1 = v1B-v1A;
     v2 = v2B-v2A;
     v3 = v3B-v3A;
-    
-    % Transform total Free Surface Correction to displacements from ADCS 
+
+    % Transform total Free Surface Correction to displacements from ADCS
     % to EFCS
     [ue,un,uv] = CoordTrans(v1,v2,v3,A');
 end
 
 function [u,v,w]=AngDisDisp(x,y,z,alpha,bx,by,bz,nu)
-% AngDisDisp calculates the "incomplete" displacements (without the 
+% AngDisDisp calculates the "incomplete" displacements (without the
 % Burgers' function contribution) associated with an angular dislocation in
 % an elastic full-space.
 
@@ -460,8 +460,8 @@ v = vx+vy+vz;
 w = wx+wy+wz;
 
 function [v1,v2,v3] = AngDisDispFSC(y1,y2,y3,beta,b1,b2,b3,nu,a)
-% AngDisDispFSC calculates the harmonic function contribution to the 
-% displacements associated with an angular dislocation in an elastic 
+% AngDisDispFSC calculates the harmonic function contribution to the
+% displacements associated with an angular dislocation in an elastic
 % half-space.
 
 sinB = sin(beta);
@@ -505,14 +505,14 @@ v1cb2 = b2/4/pi/(1-nu)*((1-2*nu)*((2*(1-nu)*cotB^2+nu)*log(rb+y3b)-(2*...
     cotB+a)-y1.^2./(rb.*(rb+y3b)).*(2*nu+a./rb)-a*y1.^2./rb.^3)+(y3b-a)*...
     cotB./(rb+z3b).*(-cosB*sinB+a*y1.*y3b./(rb.^3*cosB)+(rb*sinB-y1)./...
     rb.*(2*(1-nu)*cosB-(rb*cosB+y3b)./(rb+z3b).*(1+a./(rb*cosB)))));
-                
+
 v2cb2 = b2/4/pi/(1-nu)*(2*(1-nu)*(1-2*nu)*Fib*cotB.^2+(1-2*nu)*y2./...
     (rb+y3b).*(-(1-2*nu-a./rb)*cotB+y1./(rb+y3b).*(nu+a./rb))-(1-2*nu)*...
     y2*cotB./(rb+z3b).*(1+a./(rb*cosB))-a*y2.*(y3b-a)*cotB./rb.^3+y2.*...
     (y3b-a)./(rb.*(rb+y3b)).*((1-2*nu)*cotB-2*nu*y1./(rb+y3b)-a*y1./rb.*...
     (1./rb+1./(rb+y3b)))+y2.*(y3b-a)*cotB./(rb.*(rb+z3b)).*(-2*(1-nu)*...
     cosB+(rb*cosB+y3b)./(rb+z3b).*(1+a./(rb*cosB))+a*y3b./(rb.^2*cosB)));
-                
+
 v3cb2 = b2/4/pi/(1-nu)*(-2*(1-nu)*(1-2*nu)*cotB*(log(rb+y3b)-cosB*...
     log(rb+z3b))-2*(1-nu)*y1./(rb+y3b).*(2*nu+a./rb)+2*(1-nu)*z1b./(rb+...
     z3b).*(cosB+a./rb)+(y3b-a)./rb.*((1-2*nu)*cotB-2*nu*y1./(rb+y3b)-a*...
@@ -524,12 +524,12 @@ v1cb3 = b3/4/pi/(1-nu)*((1-2*nu)*(y2./(rb+y3b).*(1+a./rb)-y2*cosB./(rb+...
     z3b).*(cosB+a./rb))-y2.*(y3b-a)./rb.*(a./rb.^2+1./(rb+y3b))+y2.*...
     (y3b-a)*cosB./(rb.*(rb+z3b)).*((rb*cosB+y3b)./(rb+z3b).*(cosB+a./...
     rb)+a.*y3b./rb.^2));
-                
+
 v2cb3 = b3/4/pi/(1-nu)*((1-2*nu)*(-sinB*log(rb+z3b)-y1./(rb+y3b).*(1+a./...
     rb)+z1b./(rb+z3b).*(cosB+a./rb))+y1.*(y3b-a)./rb.*(a./rb.^2+1./(rb+...
     y3b))-(y3b-a)./(rb+z3b).*(sinB*(cosB-a./rb)+z1b./rb.*(1+a.*y3b./...
     rb.^2)-1./(rb.*(rb+z3b)).*(y2.^2*cosB*sinB-a*z1b./rb.*(rb*cosB+y3b))));
-                
+
 v3cb3 = b3/4/pi/(1-nu)*(2*(1-nu)*Fib+2*(1-nu)*(y2*sinB./(rb+z3b).*(cosB+...
     a./rb))+y2.*(y3b-a)*sinB./(rb.*(rb+z3b)).*(1+(rb*cosB+y3b)./(rb+...
     z3b).*(cosB+a./rb)+a.*y3b./rb.^2));

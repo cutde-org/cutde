@@ -8,7 +8,7 @@ ${common.defs(preamble, float_type)}
 
 <%def name="pairs(name, evaluator, vec_dim)">
 KERNEL
-void pairs_${name}(GLOBAL_MEM Real* results, int n_pairs, 
+void pairs_${name}(GLOBAL_MEM Real* results, int n_pairs,
     GLOBAL_MEM Real* obs_pts, GLOBAL_MEM Real* tris,
     GLOBAL_MEM Real* slips, Real nu)
 {
