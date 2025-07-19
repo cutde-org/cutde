@@ -265,4 +265,4 @@ Some tests are marked as slow. To run these, run `pytest --runslow`.
 
 If you several backends available and installed `cutde` will prefer CUDA, then OpenCL and finally fall back to the C++ backend. If you would prefer to specify which backend to use, you can set the environment variable `CUTDE_USE_BACKEND` to either `cuda`, `opencl` or `cpp`.
 
-The `README.md` is auto-generated from a template in `docs/`. To run this process, run `docs/build_docs`.
+The `README.md` is auto-generated from a template in `docs/`. To run this process, run `docs/build_readme`.

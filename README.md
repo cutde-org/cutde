@@ -40,10 +40,6 @@ See below for basic usage and installation instructions. For more realistic usag
       * [Why can't I use Apple CPU OpenCL?](#why-cant-i-use-apple-cpu-opencl)
 * [Development](#development)
    * [Architecture](#architecture)
-
-<!-- Created by https://github.com/ekalinin/github-markdown-toc -->
-<!-- Added by: mares, at: sam. 19 juil. 2025 13:23:09 CEST -->
-
 <!--te-->
 
 ```python
@@ -320,4 +316,4 @@ Some tests are marked as slow. To run these, run `pytest --runslow`.
 
 If you several backends available and installed `cutde` will prefer CUDA, then OpenCL and finally fall back to the C++ backend. If you would prefer to specify which backend to use, you can set the environment variable `CUTDE_USE_BACKEND` to either `cuda`, `opencl` or `cpp`.
 
-The `README.md` is auto-generated from a template in `docs/`. To run this process, run `docs/build_docs`.
+The `README.md` is auto-generated from a template in `docs/`. To run this process, run `docs/build_readme`.
