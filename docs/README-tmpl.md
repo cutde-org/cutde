@@ -1,5 +1,5 @@
 <p align=center>
-    <a target="_blank" href="https://www.python.org/downloads/" title="Python version"><img src="https://img.shields.io/badge/python-%3E=_3.7-green.svg"></a>
+    <a target="_blank" href="https://www.python.org/downloads/" title="Python version"><img src="https://img.shields.io/badge/python-%3E=_${python_version}-green.svg"></a>
     <a target="_blank" href="https://pypi.org/project/cutde/" title="PyPI version"><img src="https://img.shields.io/pypi/v/cutde?logo=pypi"></a>
     <a target="_blank" href="https://anaconda.org/conda-forge/cutde" title="conda-forge"><img src="https://img.shields.io/conda/dn/conda-forge/cutde"></a>
     <a target="_blank" href="LICENSE" title="License: MIT"><img src="https://img.shields.io/badge/License-MIT-blue.svg"></a>
