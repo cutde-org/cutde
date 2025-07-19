@@ -1,18 +1,3 @@
-<!--STOP, MAKE SURE YOU ARE EDITING docs/README-tmpl.md and not README.md-->
-<!--STOP, MAKE SURE YOU ARE EDITING docs/README-tmpl.md and not README.md-->
-<!--STOP, MAKE SURE YOU ARE EDITING docs/README-tmpl.md and not README.md-->
-<!--STOP, MAKE SURE YOU ARE EDITING docs/README-tmpl.md and not README.md-->
-<!--STOP, MAKE SURE YOU ARE EDITING docs/README-tmpl.md and not README.md-->
-<!--STOP, MAKE SURE YOU ARE EDITING docs/README-tmpl.md and not README.md-->
-<!--STOP, MAKE SURE YOU ARE EDITING docs/README-tmpl.md and not README.md-->
-<!--STOP, MAKE SURE YOU ARE EDITING docs/README-tmpl.md and not README.md-->
-<!--STOP, MAKE SURE YOU ARE EDITING docs/README-tmpl.md and not README.md-->
-<!--STOP, MAKE SURE YOU ARE EDITING docs/README-tmpl.md and not README.md-->
-<!--STOP, MAKE SURE YOU ARE EDITING docs/README-tmpl.md and not README.md-->
-<!--STOP, MAKE SURE YOU ARE EDITING docs/README-tmpl.md and not README.md-->
-<!--STOP, MAKE SURE YOU ARE EDITING docs/README-tmpl.md and not README.md-->
-<!--STOP, MAKE SURE YOU ARE EDITING docs/README-tmpl.md and not README.md-->
-
 <p align=center>
     <a target="_blank" href="https://www.python.org/downloads/" title="Python version"><img src="https://img.shields.io/badge/python-%3E=_3.7-green.svg"></a>
     <a target="_blank" href="https://pypi.org/project/cutde/" title="PyPI version"><img src="https://img.shields.io/pypi/v/cutde?logo=pypi"></a>
@@ -21,8 +6,6 @@
     <a target="_blank" href="https://github.com/tbenthompson/cutde/actions" title="Test Status"><img src="https://github.com/tbenthompson/cutde/actions/workflows/test.yml/badge.svg"></a>
     <a href="https://zenodo.org/badge/latestdoi/132957124"><img src="https://zenodo.org/badge/132957124.svg" alt="DOI"></a>
 </a>
-
-<!--STOP, MAKE SURE YOU ARE EDITING docs/README-tmpl.md and not README.md-->
 
 #  Python CPU and GPU accelerated TDEs, over 100 million TDEs per second!
 
@@ -59,7 +42,7 @@ See below for basic usage and installation instructions. For more realistic usag
    * [Architecture](#architecture)
 
 <!-- Created by https://github.com/ekalinin/github-markdown-toc -->
-<!-- Added by: mares, at: sam. 19 juil. 2025 12:59:27 CEST -->
+<!-- Added by: mares, at: sam. 19 juil. 2025 13:23:09 CEST -->
 
 <!--te-->
 
