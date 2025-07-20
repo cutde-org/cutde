@@ -91,6 +91,10 @@ jobs:
 
       - name: Build wheels with cibuildwheel
         uses: pypa/cibuildwheel@v3.0.1
+        env:
+          # On PR: only build extremal Python versions (3.8 and 3.13)
+          # On main/release: build all supported versions (default behavior)
+          CIBW_BUILD: ${{ github.event_name == 'pull_request' && 'cp38-* cp313-*' || '' }}
 
       - name: Generate build provenance attestations for wheels
         # Only generate attestations for trusted workflows (not fork PRs)
@@ -106,82 +110,41 @@ jobs:
           name: cibw-wheels-${{ matrix.os }}-${{ strategy.job-index }}
           path: ./wheelhouse/*.whl
 
+  prepare_test_matrix:
+    name: Prepare test matrix
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '>=3.13'
+
+      - name: Install script dependencies
+        run: pip install pyyaml
+
+      - name: Generate test matrix
+        id: set-matrix
+        run: |
+          cd cibuildwheel-scripts
+          matrix_json=$(python generate_test_matrix.py --event-type "${{ github.event_name }}")
+          echo "matrix_json:"
+          echo "$matrix_json" | jq .
+          echo "matrix=$matrix_json" >> $GITHUB_OUTPUT
+
   test_wheels:
     name: Test wheels on ${{ matrix.platform }}
     runs-on: ${{ matrix.os }}
-    needs: build_wheels
+    needs: [build_wheels, prepare_test_matrix]
     permissions:
-      # This is required to checkout the repository
       contents: read
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - os: ubuntu-latest
-            platform: ubuntu-latest
-            python-cmd: python
-            setup-python: true
-            python-filter: ""
-          - os: ubuntu-24.04-arm
-            platform: ubuntu-24.04-arm
-            python-cmd: python
-            setup-python: true
-            python-filter: ""
-          - os: windows-latest
-            platform: windows-latest
-            python-cmd: python
-            setup-python: true
-            python-filter: ""
-          - os: macos-13
-            platform: macos-13
-            python-cmd: python
-            setup-python: true
-            python-filter: ""
-          - os: macos-14
-            platform: macos-14
-            python-cmd: python
-            setup-python: true
-            python-filter: ""
-          - os: ubuntu-latest
-          #   platform: alpine-musllinux-cp38
-          #   container: python:3.8-alpine
-          #   python-cmd: python
-          #   setup-python: false
-          #   python-filter: "-cp38-"
-          # - os: ubuntu-latest
-          #   # This can be made to work by adding:
-          #   #   apk add build-base gcc proj-util proj-dev
-          #   #   PROJ_DIR=/usr pip install pyproj==3.6.1
-          #   # but it doesn't work for Python 3.8.
-          #   platform: alpine-musllinux-cp39
-          #   container: python:3.9-alpine
-          #   python-cmd: python
-          #   setup-python: false
-          #   python-filter: "-cp39-"
-          # - os: ubuntu-latest
-            platform: alpine-musllinux-cp310
-            container: python:3.10-alpine
-            python-cmd: python
-            setup-python: false
-            python-filter: "-cp310-"
-          - os: ubuntu-latest
-            platform: alpine-musllinux-cp311
-            container: python:3.11-alpine
-            python-cmd: python
-            setup-python: false
-            python-filter: "-cp311-"
-          - os: ubuntu-latest
-            platform: alpine-musllinux-cp312
-            container: python:3.12-alpine
-            python-cmd: python
-            setup-python: false
-            python-filter: "-cp312-"
-          - os: ubuntu-latest
-            platform: alpine-musllinux-cp313
-            container: python:3.13-alpine
-            python-cmd: python
-            setup-python: false
-            python-filter: "-cp313-"
+      matrix: ${{ fromJson(needs.prepare_test_matrix.outputs.matrix) }}
 
     container: ${{ matrix.container }}
 
