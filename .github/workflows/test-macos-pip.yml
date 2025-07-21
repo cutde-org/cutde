@@ -20,6 +20,7 @@ jobs:
         fetch-depth: 0
     - uses: mamba-org/setup-micromamba@v1
       with:
+        environment-name: pip-install-cutde-repro-env
         create-args: >-
           python=3.12.*
           pip
