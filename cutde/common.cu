@@ -752,6 +752,15 @@ WITHIN_KERNEL Real6 AngSetupFSC_S(Real3 obs, Real3 slip, Real3 PA, Real3 PB, Rea
     );
 </%def>
 
+<%def name="harmonic_fsc(tri_prefix, fsc_func, add_func)">
+    // Harmonic free surface correction
+    Real3 efcs_slip = inv_transform3(Vnorm, Vstrike, Vdip, slip);
+    auto uvw0 = ${fsc_func}(obs, efcs_slip, ${tri_prefix}0, ${tri_prefix}1, nu);
+    auto uvw1 = ${fsc_func}(obs, efcs_slip, ${tri_prefix}1, ${tri_prefix}2, nu);
+    auto uvw2 = ${fsc_func}(obs, efcs_slip, ${tri_prefix}2, ${tri_prefix}0, nu);
+    fsc_term = ${add_func}(${add_func}(uvw0, uvw1), uvw2);
+</%def>
+
 <%def name="disp_hs(tri_prefix)">
     Real3 summed_terms;
     {
@@ -760,12 +769,8 @@ WITHIN_KERNEL Real6 AngSetupFSC_S(Real3 obs, Real3 slip, Real3 PA, Real3 PB, Rea
 
         summed_terms = full_out;
 
-        // Harmonic free surface correction
-        Real3 efcs_slip = inv_transform3(Vnorm, Vstrike, Vdip, slip);
-        Real3 uvw0 = AngSetupFSC(obs, efcs_slip, ${tri_prefix}0, ${tri_prefix}1, nu);
-        Real3 uvw1 = AngSetupFSC(obs, efcs_slip, ${tri_prefix}1, ${tri_prefix}2, nu);
-        Real3 uvw2 = AngSetupFSC(obs, efcs_slip, ${tri_prefix}2, ${tri_prefix}0, nu);
-        Real3 fsc_term = add3(add3(uvw0, uvw1), uvw2);
+        Real3 fsc_term;
+        ${harmonic_fsc(tri_prefix, "AngSetupFSC", "add3")}
 
         summed_terms = add3(fsc_term, summed_terms);
     }
@@ -794,12 +799,8 @@ WITHIN_KERNEL Real6 AngSetupFSC_S(Real3 obs, Real3 slip, Real3 PA, Real3 PB, Rea
 
         summed_terms = full_out;
 
-        // Harmonic free surface correction
-        Real3 efcs_slip = inv_transform3(Vnorm, Vstrike, Vdip, slip);
-        Real6 uvw0 = AngSetupFSC_S(obs, efcs_slip, ${tri_prefix}0, ${tri_prefix}1, nu);
-        Real6 uvw1 = AngSetupFSC_S(obs, efcs_slip, ${tri_prefix}1, ${tri_prefix}2, nu);
-        Real6 uvw2 = AngSetupFSC_S(obs, efcs_slip, ${tri_prefix}2, ${tri_prefix}0, nu);
-        Real6 fsc_term = add6(add6(uvw0, uvw1), uvw2);
+        Real6 fsc_term;
+        ${harmonic_fsc(tri_prefix, "AngSetupFSC_S", "add6")}
 
         summed_terms = add6(fsc_term, summed_terms);
     }
