@@ -761,6 +761,16 @@ WITHIN_KERNEL Real6 AngSetupFSC_S(Real3 obs, Real3 slip, Real3 PA, Real3 PB, Rea
     fsc_term = ${add_func}(${add_func}(uvw0, uvw1), uvw2);
 </%def>
 
+<%def name="setup_image_triangle(src_prefix, dst_prefix)">
+    ${dst_prefix}0 = ${src_prefix}0;
+    ${dst_prefix}1 = ${src_prefix}1;
+    ${dst_prefix}2 = ${src_prefix}2;
+
+    ${dst_prefix}0.z *= -1;
+    ${dst_prefix}1.z *= -1;
+    ${dst_prefix}2.z *= -1;
+</%def>
+
 <%def name="disp_hs(tri_prefix)">
     Real3 summed_terms;
     {
@@ -775,13 +785,8 @@ WITHIN_KERNEL Real6 AngSetupFSC_S(Real3 obs, Real3 slip, Real3 PA, Real3 PB, Rea
         summed_terms = add3(fsc_term, summed_terms);
     }
     {
-        Real3 image_tri0 = tri0;
-        Real3 image_tri1 = tri1;
-        Real3 image_tri2 = tri2;
-
-        image_tri0.z *= -1;
-        image_tri1.z *= -1;
-        image_tri2.z *= -1;
+        Real3 image_tri0, image_tri1, image_tri2;
+        ${setup_image_triangle("tri", "image_tri")}
 
         // Image dislocation
         ${disp_fs("image_tri", "true")}
@@ -805,13 +810,8 @@ WITHIN_KERNEL Real6 AngSetupFSC_S(Real3 obs, Real3 slip, Real3 PA, Real3 PB, Rea
         summed_terms = add6(fsc_term, summed_terms);
     }
     {
-        Real3 image_tri0 = tri0;
-        Real3 image_tri1 = tri1;
-        Real3 image_tri2 = tri2;
-
-        image_tri0.z *= -1;
-        image_tri1.z *= -1;
-        image_tri2.z *= -1;
+        Real3 image_tri0, image_tri1, image_tri2;
+        ${setup_image_triangle("tri", "image_tri")}
 
         // Image dislocation
         ${strain_fs("image_tri", "true")}
