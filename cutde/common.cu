@@ -172,6 +172,18 @@ WITHIN_KERNEL Real3 cross3(Real3 x, Real3 y) {
     return out;
 }
 
+WITHIN_KERNEL Real triangle_area(Real3 tri0, Real3 tri1, Real3 tri2) {
+    Real3 edge1 = sub3(tri1, tri0);
+    Real3 edge2 = sub3(tri2, tri0);
+    Real3 cross_prod = cross3(edge1, edge2);
+    return 0.5 * length3(cross_prod);
+}
+
+WITHIN_KERNEL int is_degenerate_triangle(Real3 tri0, Real3 tri1, Real3 tri2) {
+    Real area = triangle_area(tri0, tri1, tri2);
+    return area == 0;
+}
+
 WITHIN_KERNEL Real6 tensor_transform3(Real3 a, Real3 b, Real3 c, Real6 tensor) {
     Real A[9];
     A[0] = a.x; A[1] = a.y; A[2] = a.z;
