@@ -668,9 +668,13 @@ WITHIN_KERNEL Real6 AngSetupFSC_S(Real3 obs, Real3 slip, Real3 PA, Real3 PB, Rea
 </%def>
 
 <%def name="disp_fs(tri_prefix, is_halfspace='false')">
-    ${setup_tde(tri_prefix, is_halfspace)}
     Real3 full_out;
-    ${disp_fs_core(tri_prefix, is_halfspace)}
+    if (is_degenerate_triangle(${tri_prefix}0, ${tri_prefix}1, ${tri_prefix}2)) {
+        full_out = make3(0.0, 0.0, 0.0);
+    } else {
+        ${setup_tde(tri_prefix, is_halfspace)}
+        ${disp_fs_core(tri_prefix, is_halfspace)}
+    }
 </%def>
 
 <%def name="strain_fs_core(tri_prefix, is_halfspace='false')">
@@ -699,9 +703,13 @@ WITHIN_KERNEL Real6 AngSetupFSC_S(Real3 obs, Real3 slip, Real3 PA, Real3 PB, Rea
 </%def>
 
 <%def name="strain_fs(tri_prefix, is_halfspace='false')">
-    ${setup_tde(tri_prefix, is_halfspace)}
     Real6 full_out;
-    ${strain_fs_core(tri_prefix, is_halfspace)}
+    if (is_degenerate_triangle(${tri_prefix}0, ${tri_prefix}1, ${tri_prefix}2)) {
+        full_out = make6(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+    } else {
+        ${setup_tde(tri_prefix, is_halfspace)}
+        ${strain_fs_core(tri_prefix, is_halfspace)}
+    }
 </%def>
 
 <%def name="setup_tde(tri_prefix, is_halfspace)">
@@ -772,9 +780,13 @@ WITHIN_KERNEL Real6 AngSetupFSC_S(Real3 obs, Real3 slip, Real3 PA, Real3 PB, Rea
 </%def>
 
 <%def name="disp_hs(tri_prefix)">
-    ${setup_tde(tri_prefix, "false")}
+    Real3 full_out;
+    if (is_degenerate_triangle(${tri_prefix}0, ${tri_prefix}1, ${tri_prefix}2)) {
+        full_out = make3(0.0, 0.0, 0.0);
+    } else {
+        ${setup_tde(tri_prefix, "false")}
 
-    Real3 summed_terms;
+        Real3 summed_terms;
     {
         // Main dislocation
         Real3 full_out;
@@ -798,13 +810,18 @@ WITHIN_KERNEL Real6 AngSetupFSC_S(Real3 obs, Real3 slip, Real3 PA, Real3 PB, Rea
 
         summed_terms = add3(summed_terms, full_out);
     }
-    Real3 full_out = summed_terms;
+        full_out = summed_terms;
+    }
 </%def>
 
 <%def name="strain_hs(tri_prefix)">
-    ${setup_tde(tri_prefix, "false")}
+    Real6 full_out;
+    if (is_degenerate_triangle(${tri_prefix}0, ${tri_prefix}1, ${tri_prefix}2)) {
+        full_out = make6(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+    } else {
+        ${setup_tde(tri_prefix, "false")}
 
-    Real6 summed_terms;
+        Real6 summed_terms;
     {
         // Main dislocation
         Real6 full_out;
@@ -828,5 +845,6 @@ WITHIN_KERNEL Real6 AngSetupFSC_S(Real3 obs, Real3 slip, Real3 PA, Real3 PB, Rea
 
         summed_terms = add6(summed_terms, full_out);
     }
-    Real6 full_out = summed_terms;
+        full_out = summed_terms;
+    }
 </%def>
