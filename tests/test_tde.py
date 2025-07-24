@@ -308,3 +308,131 @@ def test_block(dtype, F_ordered, field, module_name):
 
     tol = 1e-5 if pts.dtype.type in [np.float32, np.int32] else 1e-10
     np.testing.assert_allclose(M1, M2, rtol=tol, atol=tol)
+
+
+# Collection of degenerate triangles
+DEGENERATE_TRIANGLES = [
+    np.array(
+        [[[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [0.0, 0.0, 0.0]]]
+    ),  # All vertices coincide
+    np.array(
+        [[[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [2.0, 0.0, 0.0]]]
+    ),  # Collinear vertices
+    np.array(
+        [[[0.0, 0.0, 0.0], [0.0, 0.0, 0.0], [1.0, 0.0, 0.0]]]
+    ),  # Duplicate vertices
+    1e-20
+    * np.array(
+        [[[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]]]
+    ),  # Nearly degenerate
+]
+
+
+@pytest.mark.parametrize("triangles", DEGENERATE_TRIANGLES)
+@pytest.mark.parametrize("module", [FS, HS])
+def test_degenerate_triangles_no_nan(module, triangles):
+    """
+    Verify that degenerate triangles do not produce NaN values.
+    """
+    obs_pts = np.array([[0.73, -0.41, -1.2]])
+    slip = np.array([[1.3, 0.7, 0.3]])
+    disp = module.disp(obs_pts, triangles, slip, 0.25)
+    strain = module.strain(obs_pts, triangles, slip, 0.25)
+    assert np.all(np.isfinite(disp))
+    assert np.all(np.isfinite(strain))
+
+
+@pytest.mark.parametrize("triangles", DEGENERATE_TRIANGLES)
+@pytest.mark.parametrize("module", [FS, HS])
+def test_degenerate_triangles_zero_result(module, triangles):
+    """
+    Verify that degenerate triangles produce a zero result.
+    """
+    obs_pts = np.array([[0.73, -0.41, -1.2]])
+    slip = np.array([[1.3, 0.7, 0.3]])
+    disp = module.disp(obs_pts, triangles, slip, 0.25)
+    strain = module.strain(obs_pts, triangles, slip, 0.25)
+    assert np.allclose(disp, 0.0)
+    assert np.allclose(strain, 0.0)
+
+
+@pytest.mark.parametrize("module", [FS, HS])
+def test_mixed_degenerate_nondegenerate_triangles(module):
+    """
+    Verify that calculations work correctly when degenerate and non-degenerate
+    triangles are mixed in a single computation. This tests the robustness of
+    the degeneracy checks in realistic scenarios.
+    """
+    # Mix of triangles: degenerate and non-degenerate
+    mixed_triangles = np.array(
+        [
+            # Non-degenerate triangle
+            [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 1.0, 0.0]],
+            # Degenerate: all vertices coincide
+            [[0.5, 0.5, 0.0], [0.5, 0.5, 0.0], [0.5, 0.5, 0.0]],
+            # Non-degenerate triangle
+            [[2.0, 0.0, 0.0], [3.0, 0.0, 0.0], [2.0, 1.0, 0.0]],
+            # Degenerate: collinear vertices
+            [[1.0, 1.0, 0.0], [2.0, 2.0, 0.0], [3.0, 3.0, 0.0]],
+            # Non-degenerate triangle
+            [[-1.0, 0.0, 0.0], [0.0, 0.0, 0.0], [-0.5, 1.0, 0.0]],
+        ]
+    )
+
+    obs_pts = np.array(
+        [
+            [0.5, 0.5, -1.0],  # For triangle 0
+            [1.5, 0.2, 0.5],  # For triangle 1
+            [2.5, 0.5, -0.5],  # For triangle 2
+            [2.0, 2.5, 1.0],  # For triangle 3
+            [-0.5, 0.5, 0.5],  # For triangle 4
+        ]
+    )
+    slip = np.array(
+        [
+            [1.0, 0.0, 0.0],  # Non-degenerate
+            [0.5, 0.5, 0.5],  # Degenerate (should have no effect)
+            [0.0, 1.0, 0.0],  # Non-degenerate
+            [1.0, 1.0, 1.0],  # Degenerate (should have no effect)
+            [0.0, 0.0, 1.0],  # Non-degenerate
+        ]
+    )
+
+    # Calculate displacement and strain
+    disp = module.disp(obs_pts, mixed_triangles, slip, 0.25)
+    strain = module.strain(obs_pts, mixed_triangles, slip, 0.25)
+
+    # Verify no NaN or infinite values
+    assert np.all(np.isfinite(disp))
+    assert np.all(np.isfinite(strain))
+
+    # Calculate contributions from only non-degenerate triangles
+    non_degenerate_indices = [0, 2, 4]  # Indices of non-degenerate triangles
+    non_degenerate_triangles = mixed_triangles[non_degenerate_indices]
+    non_degenerate_slip = slip[non_degenerate_indices]
+    non_degenerate_obs_pts = obs_pts[non_degenerate_indices]
+
+    disp_nondegenerate = module.disp(
+        non_degenerate_obs_pts, non_degenerate_triangles, non_degenerate_slip, 0.25
+    )
+    strain_nondegenerate = module.strain(
+        non_degenerate_obs_pts, non_degenerate_triangles, non_degenerate_slip, 0.25
+    )
+
+    # Results should be the same (degenerate triangles contribute zero)
+    # Compare only the non-degenerate triangle results
+    disp_selected = disp[non_degenerate_indices]
+    strain_selected = strain[non_degenerate_indices]
+    np.testing.assert_allclose(
+        disp_selected, disp_nondegenerate, rtol=1e-10, atol=1e-15
+    )
+    np.testing.assert_allclose(
+        strain_selected, strain_nondegenerate, rtol=1e-10, atol=1e-15
+    )
+
+    # Verify that degenerate triangles produce zero results
+    degenerate_indices = [1, 3]  # Indices of degenerate triangles
+    disp_degenerate = disp[degenerate_indices]
+    strain_degenerate = strain[degenerate_indices]
+    np.testing.assert_allclose(disp_degenerate, 0.0, atol=1e-15)
+    np.testing.assert_allclose(strain_degenerate, 0.0, atol=1e-15)
