@@ -617,9 +617,7 @@ WITHIN_KERNEL Real6 AngSetupFSC_S(Real3 obs, Real3 slip, Real3 PA, Real3 PB, Rea
 #endif
 </%def> //END OF defs()
 
-<%def name="disp_fs(tri_prefix, is_halfspace='false')">
-    ${setup_tde(tri_prefix, is_halfspace)}
-
+<%def name="disp_fs_core(tri_prefix, is_halfspace='false')">
     Real3 out;
     if (mode == 1) {
         // Calculate first angular dislocation contribution
@@ -666,12 +664,16 @@ WITHIN_KERNEL Real6 AngSetupFSC_S(Real3 obs, Real3 slip, Real3 PA, Real3 PB, Rea
     out = add3(out, mul_scalar3(slip,Fi));
 
     // Transform the complete displacement vector components from TDCS into EFCS
-    Real3 full_out = inv_transform3(Vnorm, Vstrike, Vdip, out);
+    full_out = inv_transform3(Vnorm, Vstrike, Vdip, out);
 </%def>
 
-<%def name="strain_fs(tri_prefix, is_halfspace='false')">
+<%def name="disp_fs(tri_prefix, is_halfspace='false')">
     ${setup_tde(tri_prefix, is_halfspace)}
+    Real3 full_out;
+    ${disp_fs_core(tri_prefix, is_halfspace)}
+</%def>
 
+<%def name="strain_fs_core(tri_prefix, is_halfspace='false')">
     Real6 out;
     if (mode == 1) {
         // Calculate first angular dislocation contribution
@@ -693,8 +695,13 @@ WITHIN_KERNEL Real6 AngSetupFSC_S(Real3 obs, Real3 slip, Real3 PA, Real3 PB, Rea
         out = make6(NAN, NAN, NAN, NAN, NAN, NAN);
     }
 
+    full_out = tensor_transform3(Vnorm, Vstrike, Vdip, out);
+</%def>
 
-    Real6 full_out = tensor_transform3(Vnorm, Vstrike, Vdip, out);
+<%def name="strain_fs(tri_prefix, is_halfspace='false')">
+    ${setup_tde(tri_prefix, is_halfspace)}
+    Real6 full_out;
+    ${strain_fs_core(tri_prefix, is_halfspace)}
 </%def>
 
 <%def name="setup_tde(tri_prefix, is_halfspace)">
