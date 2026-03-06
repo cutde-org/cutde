@@ -192,9 +192,11 @@ jobs:
             3.13
 
       - name: Install script dependencies
+        env:
+          PYTHON: ${{ matrix.python-cmd }}
         run: |
-          ${{ matrix.python-cmd }} -m pip install --upgrade pip
-          ${{ matrix.python-cmd }} -m pip install -r cibuildwheel-scripts/requirements.txt
+          $PYTHON -m pip install --upgrade pip
+          $PYTHON -m pip install -r cibuildwheel-scripts/requirements.txt
 
       - name: Download all wheel artifacts
         uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
@@ -203,6 +205,9 @@ jobs:
 
       - name: Organize wheels
         shell: bash
+        env:
+          PYTHON_FILTER: ${{ matrix.python-filter }}
+          PLATFORM: ${{ matrix.platform }}
         run: |
           # Create a flat directory with all wheels
           mkdir -p ./wheels-flat
@@ -210,10 +215,10 @@ jobs:
 
           # Filter wheels by platform (e.g. Alpine keeps only specific cpython,
           # win32 runner keeps only win32 wheels).
-          if [ "${{ matrix.python-filter }}" != "" ]; then
-            echo "Filtering wheels for ${{ matrix.platform }} (keeping only ${{ matrix.python-filter }} wheels)..."
+          if [ -n "$PYTHON_FILTER" ]; then
+            echo "Filtering wheels for $PLATFORM (keeping only $PYTHON_FILTER wheels)..."
             mkdir -p ./wheels-filtered
-            find ./wheels-flat -name "*${{ matrix.python-filter }}*.whl" -exec cp {} ./wheels-filtered/ \;
+            find ./wheels-flat -name "*${PYTHON_FILTER}*.whl" -exec cp {} ./wheels-filtered/ \;
             rm -rf ./wheels-flat
             mv ./wheels-filtered ./wheels-flat
           fi
@@ -222,13 +227,19 @@ jobs:
           ls -la ./wheels-flat/
 
       - name: Test all wheels
+        env:
+          PYTHON: ${{ matrix.python-cmd }}
+          PLATFORM: ${{ matrix.platform }}
         run: |
-          ${{ matrix.python-cmd }} cibuildwheel-scripts/test_wheels.py --wheels-dir ./wheels-flat --results-dir ./wheel-results/${{ matrix.platform }}
+          $PYTHON cibuildwheel-scripts/test_wheels.py --wheels-dir ./wheels-flat --results-dir "./wheel-results/$PLATFORM"
 
       - name: Generate summary for this platform
         if: always()
+        env:
+          PYTHON: ${{ matrix.python-cmd }}
+          PLATFORM: ${{ matrix.platform }}
         run: |
-          ${{ matrix.python-cmd }} cibuildwheel-scripts/generate_summary.py --results-dir ./wheel-results/${{ matrix.platform }} --github-summary
+          $PYTHON cibuildwheel-scripts/generate_summary.py --results-dir "./wheel-results/$PLATFORM" --github-summary
 
       - name: Upload wheel test results
         if: always()
