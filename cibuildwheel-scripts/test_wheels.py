@@ -125,6 +125,10 @@ class WheelTester:
             else:
                 return "macos-x86_64"
         elif system == "windows":
+            import struct
+
+            if struct.calcsize("P") * 8 == 32:
+                return "windows-x86"
             return "windows-amd64"
         else:
             return f"{system}-{machine}"
@@ -176,7 +180,8 @@ class WheelTester:
                 r"linux_aarch64",
                 r"musllinux.*aarch64",
             ],  # musl systems
-            "windows-amd64": [r"win_amd64", r"win32"],
+            "windows-amd64": [r"win_amd64"],
+            "windows-x86": [r"win32"],
             "macos-x86_64": [r"macosx.*x86_64"],
             "macos-arm64": [r"macosx.*arm64", r"macosx.*universal2"],
         }

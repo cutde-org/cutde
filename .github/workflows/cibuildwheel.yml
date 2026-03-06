@@ -13,6 +13,8 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions: {}
+
 jobs:
   build_sdist:
     name: Build source distribution
@@ -25,14 +27,14 @@ jobs:
       contents: read
     steps:
       - name: Checkout source code
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           # Full history is required for setuptools-scm to determine version
           fetch-depth: 0
           persist-credentials: false
 
       - name: Build source distribution with attestations
-        uses: hynek/build-and-inspect-python-package@v2
+        uses: hynek/build-and-inspect-python-package@efb823f52190ad02594531168b7a2d5790e66516 # v2.14.0
         with:
           # Generate build provenance attestations to establish SLSA Build Level 2+
           # Only enable attestations for trusted workflows (not fork PRs)
@@ -52,45 +54,50 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # macos-13 is an intel runner, macos-14 is apple silicon
+        # macos-15-intel is Intel x86_64, macos-14 is Apple Silicon arm64
+        # Note: macos-13 was retired December 2025; macos-15-intel is available
+        # through August 2027 when x86_64 support ends entirely.
         # Note: Windows ARM64 (windows-11-arm) isn't actually supported by cibuildwheel's
         # Meson backend—it only wires up setuptools and setuptools_rust on ARM, and its
         # VS-toolchain detection doesn't configure cl.exe for Meson builds. Skipping this
         # platform until official ARM64 Meson support lands.
-        os: [ubuntu-latest, ubuntu-24.04-arm, windows-latest, macos-13, macos-14]
+        os: [ubuntu-latest, ubuntu-24.04-arm, windows-latest, macos-15-intel, macos-14]
 
     steps:
       - name: Checkout source code
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          # Full history is required for setuptools-scm to determine version
+          fetch-depth: 0
+          persist-credentials: false
 
-      - name: Install libomp and set up environment
+      - name: Set up OpenMP for macOS
         if: runner.os == 'macOS'
         run: |
-          brew install libomp llvm
+          # Use a conda-forge libomp built against an old macOS SDK so that
+          # delocate can bundle it into wheels targeting 10.9 (x86_64) or
+          # 11.0 (arm64).  Homebrew's libomp targets the runner's OS, which
+          # causes a DelocationError for backward-compatible wheels.
+          # Approach borrowed from scikit-learn's build_wheels.sh.
+          if [[ $(uname -m) == "arm64" ]]; then
+            OPENMP_URL="https://anaconda.org/conda-forge/llvm-openmp/11.1.0/download/osx-arm64/llvm-openmp-11.1.0-hf3c4609_1.tar.bz2"
+          else
+            OPENMP_URL="https://anaconda.org/conda-forge/llvm-openmp/11.1.0/download/osx-64/llvm-openmp-11.1.0-hda6cdc1_1.tar.bz2"
+          fi
 
-          LLVM_PREFIX=$(brew --prefix llvm)
-          LIBOMP_PREFIX=$(brew --prefix libomp)
+          PREFIX="$HOME/openmp"
+          mkdir -p "$PREFIX"
+          curl -sL "$OPENMP_URL" | tar xj -C "$PREFIX"
 
-          # Tell setuptools which compiler to call
-          echo "CC=${LLVM_PREFIX}/bin/clang"    >> $GITHUB_ENV
-          echo "CXX=${LLVM_PREFIX}/bin/clang++" >> $GITHUB_ENV
-
-          # Point -fopenmp at the right headers + libs
-          echo "CPPFLAGS=-I${LIBOMP_PREFIX}/include" >> $GITHUB_ENV
-          echo "LDFLAGS=-L${LIBOMP_PREFIX}/lib"       >> $GITHUB_ENV
-
-          # Prepend Homebrew's LLVM to PATH so any clang/clang++ calls hit the right one
-          echo "PATH=${LLVM_PREFIX}/bin:$PATH"      >> $GITHUB_ENV
-
-      - name: Figure out macOS deployment target
-        if: runner.os == 'macOS'
-        run: |
-          # e.g. "13.4.1" → "13.4"
-          OS_VER=$(sw_vers -productVersion | cut -d. -f1-2)
-          echo "MACOSX_DEPLOYMENT_TARGET=${OS_VER}" >> $GITHUB_ENV
+          echo "CC=/usr/bin/clang"    >> $GITHUB_ENV
+          echo "CXX=/usr/bin/clang++" >> $GITHUB_ENV
+          echo "CPPFLAGS=-I${PREFIX}/include" >> $GITHUB_ENV
+          echo "CFLAGS=-I${PREFIX}/include"   >> $GITHUB_ENV
+          echo "CXXFLAGS=-I${PREFIX}/include" >> $GITHUB_ENV
+          echo "LDFLAGS=-Wl,-rpath,${PREFIX}/lib -L${PREFIX}/lib" >> $GITHUB_ENV
 
       - name: Build wheels with cibuildwheel
-        uses: pypa/cibuildwheel@v3.0.1
+        uses: pypa/cibuildwheel@ee02a1537ce3071a004a6b08c41e72f0fdc42d9a # v3.4.0
         env:
           # On PR: only build extremal Python versions (3.8 and 3.13)
           # On main/release: build all supported versions (default behavior)
@@ -101,13 +108,13 @@ jobs:
       - name: Generate build provenance attestations for wheels
         # Only generate attestations for trusted workflows (not fork PRs)
         if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
-        uses: actions/attest-build-provenance@v1
+        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
         with:
           # Generate SLSA Build Level 2+ provenance for all built wheels
           subject-path: 'wheelhouse/*.whl'
 
       - name: Upload wheel artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: cibw-wheels-${{ matrix.os }}-${{ strategy.job-index }}
           path: ./wheelhouse/*.whl
@@ -115,14 +122,18 @@ jobs:
   prepare_test_matrix:
     name: Prepare test matrix
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
       - name: Checkout source code
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: '>=3.13'
 
@@ -163,12 +174,15 @@ jobs:
             curl
 
       - name: Checkout source code
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Set up Python (non-Alpine)
         if: matrix.setup-python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
+          architecture: ${{ matrix.setup-python-arch }}
           python-version: |
             3.8
             3.9
@@ -178,31 +192,34 @@ jobs:
             3.13
 
       - name: Install script dependencies
+        shell: bash
+        env:
+          PYTHON: ${{ matrix.python-cmd }}
         run: |
-          ${{ matrix.python-cmd }} -m pip install --upgrade pip
-          ${{ matrix.python-cmd }} -m pip install -r cibuildwheel-scripts/requirements.txt
+          $PYTHON -m pip install --upgrade pip
+          $PYTHON -m pip install -r cibuildwheel-scripts/requirements.txt
 
       - name: Download all wheel artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
         with:
           path: ./all-wheels
 
       - name: Organize wheels
         shell: bash
+        env:
+          PYTHON_FILTER: ${{ matrix.python-filter }}
+          PLATFORM: ${{ matrix.platform }}
         run: |
           # Create a flat directory with all wheels
           mkdir -p ./wheels-flat
           find ./all-wheels -name "*.whl" -exec cp {} ./wheels-flat/ \;
 
-          # Skip win32 wheels to avoid 64-bit vs 32-bit Python mismatch
-          echo "Removing win32 wheels (64-bit Python can't test 32-bit wheels)..."
-          find ./wheels-flat -name "*win32*.whl" -delete
-
-          # Filter wheels for Alpine (only Python specific versions)
-          if [ "${{ matrix.python-filter }}" != "" ]; then
-            echo "Filtering wheels for ${{ matrix.platform }} (keeping only ${{ matrix.python-filter }} wheels)..."
+          # Filter wheels by platform (e.g. Alpine keeps only specific cpython,
+          # win32 runner keeps only win32 wheels).
+          if [ -n "$PYTHON_FILTER" ]; then
+            echo "Filtering wheels for $PLATFORM (keeping only $PYTHON_FILTER wheels)..."
             mkdir -p ./wheels-filtered
-            find ./wheels-flat -name "*${{ matrix.python-filter }}*.whl" -exec cp {} ./wheels-filtered/ \;
+            find ./wheels-flat -name "*${PYTHON_FILTER}*.whl" -exec cp {} ./wheels-filtered/ \;
             rm -rf ./wheels-flat
             mv ./wheels-filtered ./wheels-flat
           fi
@@ -211,17 +228,25 @@ jobs:
           ls -la ./wheels-flat/
 
       - name: Test all wheels
+        shell: bash
+        env:
+          PYTHON: ${{ matrix.python-cmd }}
+          PLATFORM: ${{ matrix.platform }}
         run: |
-          ${{ matrix.python-cmd }} cibuildwheel-scripts/test_wheels.py --wheels-dir ./wheels-flat --results-dir ./wheel-results/${{ matrix.platform }}
+          $PYTHON cibuildwheel-scripts/test_wheels.py --wheels-dir ./wheels-flat --results-dir "./wheel-results/$PLATFORM"
 
       - name: Generate summary for this platform
         if: always()
+        shell: bash
+        env:
+          PYTHON: ${{ matrix.python-cmd }}
+          PLATFORM: ${{ matrix.platform }}
         run: |
-          ${{ matrix.python-cmd }} cibuildwheel-scripts/generate_summary.py --results-dir ./wheel-results/${{ matrix.platform }} --github-summary
+          $PYTHON cibuildwheel-scripts/generate_summary.py --results-dir "./wheel-results/$PLATFORM" --github-summary
 
       - name: Upload wheel test results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: wheel-test-results-${{ matrix.platform }}
           path: ./wheel-results/
@@ -236,10 +261,12 @@ jobs:
       contents: read
     steps:
       - name: Checkout source code
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
           python-version: '3.11'
 
@@ -249,7 +276,7 @@ jobs:
           pip install -r cibuildwheel-scripts/requirements.txt
 
       - name: Download all wheel test results
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
         with:
           pattern: wheel-test-results-*
           path: ./all-results
@@ -260,7 +287,7 @@ jobs:
           python cibuildwheel-scripts/generate_summary.py --results-dir ./all-results --github-summary
 
       - name: Upload consolidated performance summary
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
           name: performance-summary
           path: ./all-results/
@@ -271,25 +298,25 @@ jobs:
     # Use the `release` GitHub environment to protect the Trusted Publishing (OIDC)
     # workflow by requiring signoff from a maintainer.
     environment: release
-    needs: [build_sdist, build_wheels]
+    needs: [build_sdist, build_wheels, test_wheels]
     runs-on: ubuntu-latest
     permissions:
       # write id-token is necessary for trusted publishing (OIDC)
       id-token: write
     steps:
       - name: Download Source Distribution Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
         with:
           # The build-and-inspect-python-package action invokes upload-artifact.
           # These are the correct arguments from that action.
           name: Packages
           path: dist
       - name: Download Wheel Artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # v8.0.0
         with:
           pattern: cibw-wheels-*
           path: dist
           merge-multiple: true
       - name: Publish Package to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+        uses: pypa/gh-action-pypi-publish@ed0c53931b1dc9bd32cbe73a98c7f6766f8a527e # v1.13.0
         # Implicitly attests that the packages were uploaded in the context of this workflow.
