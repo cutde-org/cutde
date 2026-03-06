@@ -50,7 +50,7 @@ include:
     setup-python: true
     setup-python-arch: ""
     python-filter: ""
-    run-on-pr: false
+    run-on-pr: true
 
   - os: macos-14
     platform: macos-14
