@@ -275,7 +275,7 @@ jobs:
     # Use the `release` GitHub environment to protect the Trusted Publishing (OIDC)
     # workflow by requiring signoff from a maintainer.
     environment: release
-    needs: [build_sdist, build_wheels]
+    needs: [build_sdist, build_wheels, test_wheels]
     runs-on: ubuntu-latest
     permissions:
       # write id-token is necessary for trusted publishing (OIDC)
