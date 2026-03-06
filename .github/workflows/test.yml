@@ -19,11 +19,11 @@ jobs:
       run:
         shell: bash -l {0}
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         # Full history is required for setuptools-scm to determine version
         fetch-depth: 0
-    - uses: mamba-org/setup-micromamba@v1
+    - uses: mamba-org/setup-micromamba@add3a49764cedee8ee24e82dfde87f5bc2914462 # v2.0.7
       with:
         environment-file: environment.yml
         create-args: python=${{ matrix.python-version }}.*
@@ -35,7 +35,7 @@ jobs:
       run: |
         CFLAGS='-stdlib=libc++' pytest --runslow --cov=./ --cov-report=xml
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v1
+      uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
       with:
         fail_ci_if_error: false
 
@@ -46,8 +46,8 @@ jobs:
       run:
         shell: bash -l {0}
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-python@v5
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+    - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
     - name: Install dependencies
       run: |
         pip install mako
@@ -70,11 +70,11 @@ jobs:
       run:
         shell: bash -l {0}
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         # Full history is required for setuptools-scm to determine version
         fetch-depth: 0
-    - uses: mamba-org/setup-micromamba@v1
+    - uses: mamba-org/setup-micromamba@add3a49764cedee8ee24e82dfde87f5bc2914462 # v2.0.7
       with:
         environment-file: environment.yml
     - name: Install cutde
@@ -98,7 +98,7 @@ jobs:
         fi
     - name: Upload generated example.png as artifact
       if: failure()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
       with:
         name: generated-example-png
         path: docs/example.png
