@@ -36,14 +36,6 @@ include:
     python-filter: ""
     run-on-pr: true
 
-  - os: windows-latest
-    platform: windows-x86
-    python-cmd: python
-    setup-python: true
-    setup-python-arch: x86
-    python-filter: "win32"
-    run-on-pr: false
-
   - os: macos-15-intel
     platform: macos-15-intel
     python-cmd: python
