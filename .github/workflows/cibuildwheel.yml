@@ -105,6 +105,9 @@ jobs:
           # Always skip free-threaded builds (testing infrastructure not yet in place).
           # On PR: also skip cp38 musllinux builds (they take ~6 minutes).
           CIBW_SKIP: ${{ github.event_name == 'pull_request' && 'cp*t-* cp38-musllinux*' || 'cp*t-*' }}
+          # Only build 64-bit Windows wheels.  scipy and matplotlib have dropped
+          # win32 support, making 32-bit wheels untestable in CI.
+          CIBW_ARCHS_WINDOWS: AMD64
 
       - name: Generate build provenance attestations for wheels
         # Only generate attestations for trusted workflows (not fork PRs)
