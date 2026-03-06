@@ -73,7 +73,10 @@ jobs:
 
       - name: Set up OpenMP for macOS
         if: runner.os == 'macOS'
+        shell: bash
         run: |
+          set -euxo pipefail
+
           # Use a conda-forge libomp built against an old macOS SDK so that
           # delocate can bundle it into wheels targeting 10.9 (x86_64) or
           # 11.0 (arm64).  Homebrew's libomp targets the runner's OS, which
@@ -87,7 +90,9 @@ jobs:
 
           PREFIX="$HOME/openmp"
           mkdir -p "$PREFIX"
-          curl -sL "$OPENMP_URL" | tar xj -C "$PREFIX"
+          curl --fail --retry 3 -sL "$OPENMP_URL" | tar xj -C "$PREFIX"
+
+          ls "$PREFIX/lib/libomp.dylib"
 
           echo "CC=/usr/bin/clang"    >> $GITHUB_ENV
           echo "CXX=/usr/bin/clang++" >> $GITHUB_ENV
