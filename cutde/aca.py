@@ -78,7 +78,7 @@ def call_clu_aca(
         gpu_buffer = backend.empty(block_sizes.sum(), float_type)
 
         # Storage for temporary rows and columns: RIref, RJref, RIstar, RJstar
-        fworkspace_per_block = n_cols + n_rows + 3 * n_cols + vec_dim * n_rows
+        fworkspace_per_block = n_cols + n_rows + vec_dim * n_cols + 3 * n_rows
         fworkspace_ends = np.cumsum(fworkspace_per_block)
         fworkspace_starts = fworkspace_ends - fworkspace_per_block
         gpu_fworkspace = backend.empty(fworkspace_ends[-1], float_type)

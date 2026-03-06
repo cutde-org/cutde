@@ -459,7 +459,7 @@ void aca_${name}(
     }
 
     if (team_idx == 0) {
-        n_terms[block_idx] = k + 1;
+        n_terms[block_idx] = max_iter > 0 ? k + 1 : 0;
     }
 }
 </%def>
