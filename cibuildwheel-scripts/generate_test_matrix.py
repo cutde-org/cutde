@@ -33,8 +33,8 @@ include:
     python-filter: ""
     run-on-pr: true
 
-  - os: macos-13
-    platform: macos-13
+  - os: macos-15-intel
+    platform: macos-15-intel
     python-cmd: python
     setup-python: true
     python-filter: ""
