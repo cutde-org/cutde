@@ -192,6 +192,7 @@ jobs:
             3.13
 
       - name: Install script dependencies
+        shell: bash
         env:
           PYTHON: ${{ matrix.python-cmd }}
         run: |
@@ -227,6 +228,7 @@ jobs:
           ls -la ./wheels-flat/
 
       - name: Test all wheels
+        shell: bash
         env:
           PYTHON: ${{ matrix.python-cmd }}
           PLATFORM: ${{ matrix.platform }}
@@ -235,6 +237,7 @@ jobs:
 
       - name: Generate summary for this platform
         if: always()
+        shell: bash
         env:
           PYTHON: ${{ matrix.python-cmd }}
           PLATFORM: ${{ matrix.platform }}
