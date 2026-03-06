@@ -16,6 +16,7 @@ include:
     platform: ubuntu-latest
     python-cmd: python
     setup-python: true
+    setup-python-arch: ""
     python-filter: ""
     run-on-pr: true
 
@@ -23,20 +24,31 @@ include:
     platform: ubuntu-24.04-arm
     python-cmd: python
     setup-python: true
+    setup-python-arch: ""
     python-filter: ""
     run-on-pr: false
 
   - os: windows-latest
-    platform: windows-latest
+    platform: windows-x64
     python-cmd: python
     setup-python: true
+    setup-python-arch: ""
     python-filter: ""
     run-on-pr: true
+
+  - os: windows-latest
+    platform: windows-x86
+    python-cmd: python
+    setup-python: true
+    setup-python-arch: x86
+    python-filter: "win32"
+    run-on-pr: false
 
   - os: macos-15-intel
     platform: macos-15-intel
     python-cmd: python
     setup-python: true
+    setup-python-arch: ""
     python-filter: ""
     run-on-pr: false
 
@@ -44,6 +56,7 @@ include:
     platform: macos-14
     python-cmd: python
     setup-python: true
+    setup-python-arch: ""
     python-filter: ""
     run-on-pr: true
 
