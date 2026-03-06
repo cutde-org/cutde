@@ -65,24 +65,30 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
-      - name: Install libomp and set up environment
+      - name: Set up OpenMP for macOS
         if: runner.os == 'macOS'
         run: |
-          brew install libomp llvm
+          # Use a conda-forge libomp built against an old macOS SDK so that
+          # delocate can bundle it into wheels targeting 10.9 (x86_64) or
+          # 11.0 (arm64).  Homebrew's libomp targets the runner's OS, which
+          # causes a DelocationError for backward-compatible wheels.
+          # Approach borrowed from scikit-learn's build_wheels.sh.
+          if [[ $(uname -m) == "arm64" ]]; then
+            OPENMP_URL="https://anaconda.org/conda-forge/llvm-openmp/11.1.0/download/osx-arm64/llvm-openmp-11.1.0-hf3c4609_1.tar.bz2"
+          else
+            OPENMP_URL="https://anaconda.org/conda-forge/llvm-openmp/11.1.0/download/osx-64/llvm-openmp-11.1.0-hda6cdc1_1.tar.bz2"
+          fi
 
-          LLVM_PREFIX=$(brew --prefix llvm)
-          LIBOMP_PREFIX=$(brew --prefix libomp)
+          PREFIX="$HOME/openmp"
+          mkdir -p "$PREFIX"
+          curl -sL "$OPENMP_URL" | tar xj -C "$PREFIX"
 
-          # Tell setuptools which compiler to call
-          echo "CC=${LLVM_PREFIX}/bin/clang"    >> $GITHUB_ENV
-          echo "CXX=${LLVM_PREFIX}/bin/clang++" >> $GITHUB_ENV
-
-          # Point -fopenmp at the right headers + libs
-          echo "CPPFLAGS=-I${LIBOMP_PREFIX}/include" >> $GITHUB_ENV
-          echo "LDFLAGS=-L${LIBOMP_PREFIX}/lib"       >> $GITHUB_ENV
-
-          # Prepend Homebrew's LLVM to PATH so any clang/clang++ calls hit the right one
-          echo "PATH=${LLVM_PREFIX}/bin:$PATH"      >> $GITHUB_ENV
+          echo "CC=/usr/bin/clang"    >> $GITHUB_ENV
+          echo "CXX=/usr/bin/clang++" >> $GITHUB_ENV
+          echo "CPPFLAGS=-I${PREFIX}/include" >> $GITHUB_ENV
+          echo "CFLAGS=-I${PREFIX}/include"   >> $GITHUB_ENV
+          echo "CXXFLAGS=-I${PREFIX}/include" >> $GITHUB_ENV
+          echo "LDFLAGS=-Wl,-rpath,${PREFIX}/lib -L${PREFIX}/lib" >> $GITHUB_ENV
 
       - name: Build wheels with cibuildwheel
         uses: pypa/cibuildwheel@ee02a1537ce3071a004a6b08c41e72f0fdc42d9a # v3.4.0
