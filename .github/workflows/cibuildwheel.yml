@@ -99,9 +99,9 @@ jobs:
       - name: Build wheels with cibuildwheel
         uses: pypa/cibuildwheel@ee02a1537ce3071a004a6b08c41e72f0fdc42d9a # v3.4.0
         env:
-          # On PR: only build extremal Python versions (3.8 and 3.13)
+          # On PR: only build extremal Python versions (3.8 and 3.14)
           # On main/release: build all supported versions (default behavior)
-          CIBW_BUILD: ${{ github.event_name == 'pull_request' && 'cp38-* cp313-*' || '' }}
+          CIBW_BUILD: ${{ github.event_name == 'pull_request' && 'cp38-* cp314-*' || '' }}
           # Always skip free-threaded builds (testing infrastructure not yet in place).
           # On PR: also skip cp38 musllinux builds (they take ~6 minutes).
           CIBW_SKIP: ${{ github.event_name == 'pull_request' && 'cp*t-* cp38-musllinux*' || 'cp*t-*' }}
