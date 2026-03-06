@@ -150,5 +150,32 @@ def runner(
         assert diff_frob < 1e-3
 
 
+@pytest.mark.parametrize("field_spec", [FS.DISP_SPEC, FS.STRAIN_SPEC])
+def test_aca_max_iter_zero(field_spec):
+    """When max_iter=0, no ACA terms should be produced and U @ V should be
+    the zero matrix."""
+    _, vec_dim = field_spec
+    n_obs, n_src = 5, 5
+    pts, tris, _ = setup_matrix_test(np.float64, False, n_obs=n_obs, n_src=n_src)
+
+    result = call_clu_aca(
+        pts,
+        tris,
+        [0],
+        [n_obs],
+        [0],
+        [n_src],
+        0.25,
+        [1e-4],
+        [0],
+        field_spec,
+    )
+
+    U, V = result[0]
+    assert U.shape == (n_obs * vec_dim, 0), f"Expected 0 terms, got U.shape={U.shape}"
+    assert V.shape == (0, n_src * 3), f"Expected 0 terms, got V.shape={V.shape}"
+    np.testing.assert_array_equal(U @ V, np.zeros((n_obs * vec_dim, n_src * 3)))
+
+
 if __name__ == "__main__":
     runner(np.float32, False, "disp", 40, compare_against_py=False, benchmark_iters=2)
