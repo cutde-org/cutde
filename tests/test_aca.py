@@ -177,5 +177,46 @@ def test_aca_max_iter_zero(field_spec):
     np.testing.assert_array_equal(U @ V, np.zeros((n_obs * vec_dim, n_src * 3)))
 
 
+def test_aca_strain_asymmetric_block():
+    """Regression test for fworkspace_per_block bug (gh-52).
+
+    With vec_dim=6 (strain) and n_src > 2*n_obs, the workspace was
+    undersized causing buffer overflow into adjacent blocks' memory."""
+    n_obs, n_src = 5, 20
+    pts, tris, _ = setup_matrix_test(np.float64, False, n_obs=n_obs, n_src=n_src)
+    pts[:, 0] -= 150
+
+    M = FS.strain_matrix(pts, tris, 0.25)
+    M = M.reshape((M.shape[0] * M.shape[1], M.shape[2] * M.shape[3]))
+
+    obs_starts = [0, 0]
+    obs_ends = [n_obs, n_obs]
+    src_starts = [0, 0]
+    src_ends = [n_src, n_src]
+
+    result = call_clu_aca(
+        pts,
+        tris,
+        obs_starts,
+        obs_ends,
+        src_starts,
+        src_ends,
+        0.25,
+        [1e-4] * 2,
+        [200] * 2,
+        FS.STRAIN_SPEC,
+        Iref0=np.zeros(2, dtype=np.int32),
+        Jref0=np.zeros(2, dtype=np.int32),
+    )
+
+    for i in range(2):
+        U, V = result[i]
+        diff = M - U @ V
+        diff_frob = np.sqrt(np.sum(diff**2))
+        assert (
+            diff_frob < 1e-3
+        ), f"Block {i}: Frobenius error {diff_frob:.3e} exceeds tolerance"
+
+
 if __name__ == "__main__":
     runner(np.float32, False, "disp", 40, compare_against_py=False, benchmark_iters=2)
